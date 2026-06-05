@@ -9,38 +9,206 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RankRouteImport } from './routes/rank'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as PdfRouteImport } from './routes/pdf'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TopicsSubjectRouteImport } from './routes/topics.$subject'
+import { Route as ResultsSessionIdRouteImport } from './routes/results.$sessionId'
+import { Route as PdfQuizRouteImport } from './routes/pdf.quiz'
+import { Route as QuizSubjectTopicRouteImport } from './routes/quiz.$subject.$topic'
+import { Route as ChatSubjectTopicRouteImport } from './routes/chat.$subject.$topic'
 
+const RankRoute = RankRouteImport.update({
+  id: '/rank',
+  path: '/rank',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfRoute = PdfRouteImport.update({
+  id: '/pdf',
+  path: '/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TopicsSubjectRoute = TopicsSubjectRouteImport.update({
+  id: '/topics/$subject',
+  path: '/topics/$subject',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultsSessionIdRoute = ResultsSessionIdRouteImport.update({
+  id: '/results/$sessionId',
+  path: '/results/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfQuizRoute = PdfQuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => PdfRoute,
+} as any)
+const QuizSubjectTopicRoute = QuizSubjectTopicRouteImport.update({
+  id: '/quiz/$subject/$topic',
+  path: '/quiz/$subject/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatSubjectTopicRoute = ChatSubjectTopicRouteImport.update({
+  id: '/chat/$subject/$topic',
+  path: '/chat/$subject/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/pdf': typeof PdfRouteWithChildren
+  '/progress': typeof ProgressRoute
+  '/rank': typeof RankRoute
+  '/pdf/quiz': typeof PdfQuizRoute
+  '/results/$sessionId': typeof ResultsSessionIdRoute
+  '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
+  '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/pdf': typeof PdfRouteWithChildren
+  '/progress': typeof ProgressRoute
+  '/rank': typeof RankRoute
+  '/pdf/quiz': typeof PdfQuizRoute
+  '/results/$sessionId': typeof ResultsSessionIdRoute
+  '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
+  '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/pdf': typeof PdfRouteWithChildren
+  '/progress': typeof ProgressRoute
+  '/rank': typeof RankRoute
+  '/pdf/quiz': typeof PdfQuizRoute
+  '/results/$sessionId': typeof ResultsSessionIdRoute
+  '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
+  '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/pdf'
+    | '/progress'
+    | '/rank'
+    | '/pdf/quiz'
+    | '/results/$sessionId'
+    | '/topics/$subject'
+    | '/chat/$subject/$topic'
+    | '/quiz/$subject/$topic'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/pdf'
+    | '/progress'
+    | '/rank'
+    | '/pdf/quiz'
+    | '/results/$sessionId'
+    | '/topics/$subject'
+    | '/chat/$subject/$topic'
+    | '/quiz/$subject/$topic'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/pdf'
+    | '/progress'
+    | '/rank'
+    | '/pdf/quiz'
+    | '/results/$sessionId'
+    | '/topics/$subject'
+    | '/chat/$subject/$topic'
+    | '/quiz/$subject/$topic'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
+  PdfRoute: typeof PdfRouteWithChildren
+  ProgressRoute: typeof ProgressRoute
+  RankRoute: typeof RankRoute
+  ResultsSessionIdRoute: typeof ResultsSessionIdRoute
+  TopicsSubjectRoute: typeof TopicsSubjectRoute
+  ChatSubjectTopicRoute: typeof ChatSubjectTopicRoute
+  QuizSubjectTopicRoute: typeof QuizSubjectTopicRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/rank': {
+      id: '/rank'
+      path: '/rank'
+      fullPath: '/rank'
+      preLoaderRoute: typeof RankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf': {
+      id: '/pdf'
+      path: '/pdf'
+      fullPath: '/pdf'
+      preLoaderRoute: typeof PdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +216,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/topics/$subject': {
+      id: '/topics/$subject'
+      path: '/topics/$subject'
+      fullPath: '/topics/$subject'
+      preLoaderRoute: typeof TopicsSubjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/results/$sessionId': {
+      id: '/results/$sessionId'
+      path: '/results/$sessionId'
+      fullPath: '/results/$sessionId'
+      preLoaderRoute: typeof ResultsSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf/quiz': {
+      id: '/pdf/quiz'
+      path: '/quiz'
+      fullPath: '/pdf/quiz'
+      preLoaderRoute: typeof PdfQuizRouteImport
+      parentRoute: typeof PdfRoute
+    }
+    '/quiz/$subject/$topic': {
+      id: '/quiz/$subject/$topic'
+      path: '/quiz/$subject/$topic'
+      fullPath: '/quiz/$subject/$topic'
+      preLoaderRoute: typeof QuizSubjectTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$subject/$topic': {
+      id: '/chat/$subject/$topic'
+      path: '/chat/$subject/$topic'
+      fullPath: '/chat/$subject/$topic'
+      preLoaderRoute: typeof ChatSubjectTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface PdfRouteChildren {
+  PdfQuizRoute: typeof PdfQuizRoute
+}
+
+const PdfRouteChildren: PdfRouteChildren = {
+  PdfQuizRoute: PdfQuizRoute,
+}
+
+const PdfRouteWithChildren = PdfRoute._addFileChildren(PdfRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
+  PdfRoute: PdfRouteWithChildren,
+  ProgressRoute: ProgressRoute,
+  RankRoute: RankRoute,
+  ResultsSessionIdRoute: ResultsSessionIdRoute,
+  TopicsSubjectRoute: TopicsSubjectRoute,
+  ChatSubjectTopicRoute: ChatSubjectTopicRoute,
+  QuizSubjectTopicRoute: QuizSubjectTopicRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
