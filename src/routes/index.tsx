@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Brain, Trophy, MessageSquare, FileText, Zap, BarChart3, Users } from "lucide-react";
 import heroImg from "@/assets/hero.png";
+import { SUBJECTS } from "@/lib/subjects";
 
 const FEATURES = [
   { icon: Brain, title: "AI-Generated Quizzes", desc: "Get exam-style multiple choice questions tailored to your subject and topic." },
@@ -11,15 +12,7 @@ const FEATURES = [
   { icon: Zap, title: "Instant Explanations", desc: "Get clear explanations for every answer so you learn while you quiz." },
 ];
 
-const SUBJECTS = [
-  { name: "Mathematics", emoji: "🔢" },
-  { name: "English", emoji: "📚" },
-  { name: "Physics", emoji: "⚡" },
-  { name: "Chemistry", emoji: "🧪" },
-  { name: "Biology", emoji: "🧬" },
-  { name: "Accounting", emoji: "📊" },
-  { name: "Geography", emoji: "🌍" },
-];
+const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
 
 export const Route = createFileRoute("/")({
   head: () => ({
