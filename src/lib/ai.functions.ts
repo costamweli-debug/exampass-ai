@@ -19,7 +19,7 @@ async function callAI(messages: Array<{ role: string; content: string }>, model 
     body: JSON.stringify({
       model,
       messages,
-      temperature: 0.7,
+      temperature: 0.4,
     }),
   });
 
