@@ -155,14 +155,14 @@ export const generateQuizFromPDF = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { text: string; subject: string; topic: string }) => data)
   .handler(async ({ data }) => {
-    const systemPrompt = `You are an expert exam question writer for Namibia NSSCO level. Generate exactly 10 multiple-choice exam questions based on the provided text.
+    const systemPrompt = `You are ExamPass AI — calm, strategic, precise. Generate exactly 10 NSSCO-level multiple-choice questions strictly from the provided text.
 
-Rules:
-- Each question must have exactly 4 options (A, B, C, D)
-- Questions should be exam-style and appropriate for NSSCO level
-- Include the correct answer index (0-3)
-- Provide a brief explanation for the correct answer
-- Return ONLY valid JSON in this exact format:
+Strict rules:
+- 4 options (A, B, C, D) per question
+- Exam-grade phrasing, NSSCO Grade 11–12
+- correctAnswer is an index 0–3
+- Explanation: one short, direct sentence — no padding
+- Return ONLY raw JSON, no markdown:
 
 {
   "questions": [
@@ -173,9 +173,7 @@ Rules:
       "explanation": "..."
     }
   ]
-}
-
-Do not include any markdown formatting, just raw JSON.`;
+}`;
 
     const userPrompt = `Generate 10 NSSCO exam questions for ${data.subject} on ${data.topic} based on this text:\n\n${data.text.slice(0, 8000)}`;
 
