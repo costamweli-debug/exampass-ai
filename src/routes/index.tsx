@@ -96,17 +96,17 @@ function LandingPage() {
             All Your NSSCO Subjects
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-center" style={{ color: "var(--color-muted-foreground)" }}>
-            Choose from 7 core subjects, each with 8+ focused topics.
+            Choose from {SUBJECTS.length} core subjects, with {TOTAL_TOPICS}+ focused topics.
           </p>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {SUBJECTS.map((subject) => (
               <div
-                key={subject.name}
+                key={subject.id}
                 className="flex flex-col items-center gap-3 rounded-2xl border p-6 transition-transform hover:scale-105"
                 style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
               >
                 <span className="text-4xl">{subject.emoji}</span>
-                <span className="text-sm font-semibold" style={{ color: "var(--color-foreground)" }}>{subject.name}</span>
+                <span className="text-sm font-semibold text-center" style={{ color: "var(--color-foreground)" }}>{subject.name}</span>
               </div>
             ))}
           </div>
