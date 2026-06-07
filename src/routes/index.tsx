@@ -60,12 +60,12 @@ function LandingPage() {
             </div>
             <div className="mt-8 flex items-center justify-center gap-6 lg:justify-start">
               <div className="text-center">
-                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>7</p>
+                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>{SUBJECTS.length}</p>
                 <p className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>Subjects</p>
               </div>
               <div className="h-8 w-px" style={{ backgroundColor: "var(--color-border)" }} />
               <div className="text-center">
-                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>56+</p>
+                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>{TOTAL_TOPICS}+</p>
                 <p className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>Topics</p>
               </div>
               <div className="h-8 w-px" style={{ backgroundColor: "var(--color-border)" }} />
