@@ -132,6 +132,70 @@ export const SUBJECTS: Subject[] = [
       { id: "africa", name: "African Geography" },
     ],
   },
+  {
+    id: "computer-science",
+    name: "Computer Science / ICT",
+    emoji: "💻",
+    description: "Learn programming, algorithms, and how computer systems work.",
+    color: "#38bdf8",
+    topics: [
+      { id: "programming-basics", name: "Programming Basics" },
+      { id: "algorithms", name: "Algorithms" },
+      { id: "data-representation", name: "Data Representation" },
+      { id: "computer-systems", name: "Computer Systems" },
+    ],
+  },
+  {
+    id: "economics",
+    name: "Economics",
+    emoji: "💹",
+    description: "Understand markets, money, and how economies work.",
+    color: "#10b981",
+    topics: [
+      { id: "supply-demand", name: "Supply and Demand" },
+      { id: "inflation", name: "Inflation" },
+      { id: "market-structures", name: "Market Structures" },
+      { id: "macroeconomics", name: "Macroeconomics" },
+    ],
+  },
+  {
+    id: "business-studies",
+    name: "Business Studies",
+    emoji: "📈",
+    description: "Study entrepreneurship, marketing, management, and finance.",
+    color: "#eab308",
+    topics: [
+      { id: "entrepreneurship", name: "Entrepreneurship" },
+      { id: "marketing", name: "Marketing" },
+      { id: "management", name: "Management" },
+      { id: "business-finance", name: "Business Finance" },
+    ],
+  },
+  {
+    id: "history",
+    name: "History",
+    emoji: "📜",
+    description: "Explore African history, world wars, and independence movements.",
+    color: "#b45309",
+    topics: [
+      { id: "african-history", name: "African History" },
+      { id: "world-wars", name: "World Wars" },
+      { id: "colonialism", name: "Colonialism" },
+      { id: "independence-movements", name: "Independence Movements" },
+    ],
+  },
+  {
+    id: "technical-subjects",
+    name: "Technical Subjects",
+    emoji: "📐",
+    description: "Master technical drawing, design, and engineering basics.",
+    color: "#64748b",
+    topics: [
+      { id: "technical-drawing", name: "Technical Drawing" },
+      { id: "design-technology", name: "Design & Technology Basics" },
+      { id: "engineering-concepts", name: "Engineering Concepts" },
+    ],
+  },
 ];
 
 export const RANKS = [

@@ -26,7 +26,7 @@ function ChatPage() {
   const topic = getTopicById(subjectId, topicId);
 
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: `Hi! I'm your AI tutor for ${subject?.name} — ${topic?.name}. Ask me anything about this topic and I'll help you understand it.` },
+    { role: "assistant", content: `${subject?.name} — ${topic?.name}. Ask a precise question. Stay on topic.` },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
