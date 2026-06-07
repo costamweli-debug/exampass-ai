@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Brain, Trophy, MessageSquare, FileText, Zap, BarChart3, Users } from "lucide-react";
 import heroImg from "@/assets/hero.png";
+import { SUBJECTS } from "@/lib/subjects";
 
 const FEATURES = [
   { icon: Brain, title: "AI-Generated Quizzes", desc: "Get exam-style multiple choice questions tailored to your subject and topic." },
@@ -11,15 +12,7 @@ const FEATURES = [
   { icon: Zap, title: "Instant Explanations", desc: "Get clear explanations for every answer so you learn while you quiz." },
 ];
 
-const SUBJECTS = [
-  { name: "Mathematics", emoji: "🔢" },
-  { name: "English", emoji: "📚" },
-  { name: "Physics", emoji: "⚡" },
-  { name: "Chemistry", emoji: "🧪" },
-  { name: "Biology", emoji: "🧬" },
-  { name: "Accounting", emoji: "📊" },
-  { name: "Geography", emoji: "🌍" },
-];
+const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -67,12 +60,12 @@ function LandingPage() {
             </div>
             <div className="mt-8 flex items-center justify-center gap-6 lg:justify-start">
               <div className="text-center">
-                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>7</p>
+                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>{SUBJECTS.length}</p>
                 <p className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>Subjects</p>
               </div>
               <div className="h-8 w-px" style={{ backgroundColor: "var(--color-border)" }} />
               <div className="text-center">
-                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>56+</p>
+                <p className="text-2xl font-bold" style={{ color: "var(--color-mint)", fontFamily: "var(--font-display)" }}>{TOTAL_TOPICS}+</p>
                 <p className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>Topics</p>
               </div>
               <div className="h-8 w-px" style={{ backgroundColor: "var(--color-border)" }} />
@@ -103,17 +96,17 @@ function LandingPage() {
             All Your NSSCO Subjects
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-center" style={{ color: "var(--color-muted-foreground)" }}>
-            Choose from 7 core subjects, each with 8+ focused topics.
+            Choose from {SUBJECTS.length} core subjects, with {TOTAL_TOPICS}+ focused topics.
           </p>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {SUBJECTS.map((subject) => (
               <div
-                key={subject.name}
+                key={subject.id}
                 className="flex flex-col items-center gap-3 rounded-2xl border p-6 transition-transform hover:scale-105"
                 style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
               >
                 <span className="text-4xl">{subject.emoji}</span>
-                <span className="text-sm font-semibold" style={{ color: "var(--color-foreground)" }}>{subject.name}</span>
+                <span className="text-sm font-semibold text-center" style={{ color: "var(--color-foreground)" }}>{subject.name}</span>
               </div>
             ))}
           </div>
