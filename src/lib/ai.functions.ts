@@ -139,12 +139,12 @@ export const summarizePDF = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { text: string; subject: string }) => data)
   .handler(async ({ data }) => {
-    const prompt = `Summarize the following ${data.subject} exam paper or notes into key points a student should study. Keep it structured and concise:
+    const prompt = `Summarize this ${data.subject} material into clean, exam-focused key points. Structured bullets only. No filler, no encouragement. End with one short "Strategic focus:" line naming what the student should prioritise.
 
 ${data.text.slice(0, 8000)}`;
 
     const summary = await callAI([
-      { role: "system", content: "You are an expert tutor summarizing exam papers for NSSCO students." },
+      { role: "system", content: "You are ExamPass AI: a strict, brilliant NSSCO mentor. Calm, precise, slightly cold. No filler." },
       { role: "user", content: prompt },
     ]);
 
