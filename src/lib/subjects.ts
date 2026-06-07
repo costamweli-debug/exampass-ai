@@ -132,8 +132,6 @@ export const SUBJECTS: Subject[] = [
       { id: "africa", name: "African Geography" },
     ],
   },
-];
-
   {
     id: "computer-science",
     name: "Computer Science / ICT",
