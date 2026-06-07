@@ -89,14 +89,20 @@ export const explainAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { question: string; correctAnswer: string; subject: string; topic: string }) => data)
   .handler(async ({ data }) => {
-    const prompt = `Explain why "${data.correctAnswer}" is the correct answer to this NSSCO ${data.subject} question on ${data.topic}:
+    const prompt = `NSSCO ${data.subject} — ${data.topic}.
 
-"${data.question}"
+Question: "${data.question}"
+Correct answer: "${data.correctAnswer}"
 
-Give a clear, student-friendly explanation that helps them understand the concept. Keep it under 200 words.`;
+Respond in exactly this structure, no headings, no fluff:
+1. Direct answer (one sentence: state why it is correct).
+2. Breakdown (2–4 short lines, plain reasoning).
+3. Strategic insight (one line: a shortcut, common trap, or pattern to remember).
+
+Tone: calm, intelligent, slightly cold, straight to the point. Do not praise the student. Do not exceed 160 words.`;
 
     const explanation = await callAI([
-      { role: "system", content: "You are a helpful tutor explaining exam answers to Namibian NSSCO students." },
+      { role: "system", content: "You are ExamPass AI: a strict, brilliant mentor for NSSCO students. Sharp, precise, never warm. You make students think — you do not coddle." },
       { role: "user", content: prompt },
     ]);
 
