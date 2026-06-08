@@ -132,7 +132,7 @@ function AppNav({ user }: { user: { email?: string } | null }) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: "var(--color-border)", backgroundColor: "oklch(0.12 0.015 260 / 0.8)" }}>
+    <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: "var(--color-border)", backgroundColor: "color-mix(in oklab, var(--color-background) 80%, transparent)" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-2xl">🎓</span>
