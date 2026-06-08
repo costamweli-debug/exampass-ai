@@ -13,6 +13,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeProvider } from "@/lib/theme";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
@@ -135,21 +138,25 @@ function AppNav({ user }: { user: { email?: string } | null }) {
           <span className="text-2xl">🎓</span>
           <span className="text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>ExamPass AI</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link to="/dashboard" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-foreground)" }}>
+              <Link to="/dashboard" className="hidden text-sm font-medium transition-colors hover:opacity-80 sm:inline" style={{ color: "var(--color-foreground)" }}>
                 Dashboard
               </Link>
-              <Link to="/progress" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-foreground)" }}>
+              <Link to="/chat" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-mint)" }}>
+                Chat
+              </Link>
+              <Link to="/progress" className="hidden text-sm font-medium transition-colors hover:opacity-80 sm:inline" style={{ color: "var(--color-foreground)" }}>
                 Progress
               </Link>
-              <Link to="/rank" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-foreground)" }}>
+              <Link to="/rank" className="hidden text-sm font-medium transition-colors hover:opacity-80 md:inline" style={{ color: "var(--color-foreground)" }}>
                 Rank
               </Link>
-              <Link to="/pdf" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-foreground)" }}>
+              <Link to="/pdf" className="hidden text-sm font-medium transition-colors hover:opacity-80 md:inline" style={{ color: "var(--color-foreground)" }}>
                 PDF
               </Link>
+              <ThemeToggle />
               <button
                 onClick={handleSignOut}
                 className="rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:opacity-90"
@@ -159,13 +166,16 @@ function AppNav({ user }: { user: { email?: string } | null }) {
               </button>
             </>
           ) : (
-            <Link
-              to="/auth"
-              className="rounded-md px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
-              style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
-            >
-              Get Started
-            </Link>
+            <>
+              <ThemeToggle />
+              <Link
+                to="/auth"
+                className="rounded-md px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+                style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+              >
+                Get Started
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -197,15 +207,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--color-background)", color: "var(--color-foreground)" }}>
-        <AppNav user={user} />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <footer className="border-t py-6 text-center text-sm" style={{ borderColor: "var(--color-border)", color: "var(--color-muted-foreground)" }}>
-          <p>© 2025 ExamPass AI. Made for Namibian NSSCO students.</p>
-        </footer>
-      </div>
+      <ThemeProvider>
+        <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--color-background)", color: "var(--color-foreground)" }}>
+          <AppNav user={user} />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+        <Toaster position="top-right" richColors />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
