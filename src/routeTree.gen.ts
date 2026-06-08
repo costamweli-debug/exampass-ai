@@ -19,6 +19,7 @@ import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as TopicsSubjectRouteImport } from './routes/topics.$subject'
 import { Route as ResultsSessionIdRouteImport } from './routes/results.$sessionId'
 import { Route as PdfQuizRouteImport } from './routes/pdf.quiz'
+import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as QuizSubjectTopicRouteImport } from './routes/quiz.$subject.$topic'
 import { Route as ChatSubjectTopicRouteImport } from './routes/chat.$subject.$topic'
@@ -73,6 +74,11 @@ const PdfQuizRoute = PdfQuizRouteImport.update({
   path: '/quiz',
   getParentRoute: () => PdfRoute,
 } as any)
+const ChatThreadIdRoute = ChatThreadIdRouteImport.update({
+  id: '/chat/$threadId',
+  path: '/chat/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
   '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
   '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
   '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/rank'
     | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/rank'
     | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/rank'
     | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   ProgressRoute: typeof ProgressRoute
   RankRoute: typeof RankRoute
   ApiChatRoute: typeof ApiChatRoute
+  ChatThreadIdRoute: typeof ChatThreadIdRoute
   ResultsSessionIdRoute: typeof ResultsSessionIdRoute
   TopicsSubjectRoute: typeof TopicsSubjectRoute
   ChatIndexRoute: typeof ChatIndexRoute
@@ -270,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PdfQuizRouteImport
       parentRoute: typeof PdfRoute
     }
+    '/chat/$threadId': {
+      id: '/chat/$threadId'
+      path: '/chat/$threadId'
+      fullPath: '/chat/$threadId'
+      preLoaderRoute: typeof ChatThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProgressRoute: ProgressRoute,
   RankRoute: RankRoute,
   ApiChatRoute: ApiChatRoute,
+  ChatThreadIdRoute: ChatThreadIdRoute,
   ResultsSessionIdRoute: ResultsSessionIdRoute,
   TopicsSubjectRoute: TopicsSubjectRoute,
   ChatIndexRoute: ChatIndexRoute,
