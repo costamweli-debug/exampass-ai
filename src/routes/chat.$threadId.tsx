@@ -1,0 +1,427 @@
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  createThread,
+  deleteThread,
+  getThreadMessages,
+  listThreads,
+  renameThread,
+} from "@/lib/chat.functions";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/chat/$threadId")({
+  head: ({ params }) => ({ meta: [{ title: `Chat — ExamPass AI` }] }),
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/auth" });
+  },
+  component: ChatPage,
+});
+
+type DbMessage = { id: string; role: "user" | "assistant" | "system"; content: string };
+
+function toUIMessage(m: DbMessage): UIMessage {
+  return {
+    id: m.id,
+    role: m.role === "system" ? "assistant" : m.role,
+    parts: [{ type: "text", text: m.content }],
+  } as UIMessage;
+}
+
+function ChatPage() {
+  const { threadId } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const listFn = useServerFn(listThreads);
+  const getFn = useServerFn(getThreadMessages);
+  const createFn = useServerFn(createThread);
+  const deleteFn = useServerFn(deleteThread);
+  const renameFn = useServerFn(renameThread);
+
+  const threadsQ = useQuery({ queryKey: ["chat-threads"], queryFn: () => listFn() });
+  const messagesQ = useQuery({
+    queryKey: ["chat-messages", threadId],
+    queryFn: () => getFn({ data: { threadId } }),
+  });
+
+  const initialMessages = useMemo<UIMessage[]>(
+    () => (messagesQ.data?.messages ?? []).map((m) => toUIMessage(m as DbMessage)),
+    [messagesQ.data],
+  );
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        fetch: async (input, init) => {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          const headers = new Headers(init?.headers);
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+          // include threadId in body
+          let body = init?.body;
+          if (typeof body === "string") {
+            try {
+              const parsed = JSON.parse(body);
+              parsed.threadId = threadId;
+              body = JSON.stringify(parsed);
+            } catch {
+              // leave as-is
+            }
+          }
+          return fetch(input, { ...init, headers, body });
+        },
+      }),
+    [threadId],
+  );
+
+  const { messages, sendMessage, status, setMessages } = useChat({
+    id: threadId,
+    transport,
+    onError: (e) => {
+      console.error(e);
+      toast.error("Couldn't send message. Try again.");
+    },
+    onFinish: () => {
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    },
+  });
+
+  // Hydrate from server messages once loaded
+  const hydratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (messagesQ.isSuccess && hydratedFor.current !== threadId) {
+      setMessages(initialMessages);
+      hydratedFor.current = threadId;
+    }
+  }, [messagesQ.isSuccess, initialMessages, setMessages, threadId]);
+
+  // Composer
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const busy = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, status]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [threadId]);
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || busy) return;
+    setInput("");
+    await sendMessage({ text });
+  };
+
+  // New chat
+  const handleNew = async () => {
+    try {
+      const { thread } = await createFn();
+      await qc.invalidateQueries({ queryKey: ["chat-threads"] });
+      navigate({ to: "/chat/$threadId", params: { threadId: thread.id } });
+    } catch (e) {
+      toast.error("Couldn't create a new chat.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this chat? This can't be undone.")) return;
+    try {
+      await deleteFn({ data: { id } });
+      const remaining = (threadsQ.data?.threads ?? []).filter((t) => t.id !== id);
+      await qc.invalidateQueries({ queryKey: ["chat-threads"] });
+      if (id === threadId) {
+        if (remaining.length > 0) {
+          navigate({ to: "/chat/$threadId", params: { threadId: remaining[0].id } });
+        } else {
+          const { thread } = await createFn();
+          navigate({ to: "/chat/$threadId", params: { threadId: thread.id } });
+        }
+      }
+    } catch {
+      toast.error("Couldn't delete chat.");
+    }
+  };
+
+  const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null);
+  const handleRename = async () => {
+    if (!renaming) return;
+    const title = renaming.title.trim();
+    if (!title) return;
+    try {
+      await renameFn({ data: { id: renaming.id, title } });
+      setRenaming(null);
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    } catch {
+      toast.error("Couldn't rename.");
+    }
+  };
+
+  // Sidebar search
+  const [search, setSearch] = useState("");
+  const filteredThreads = (threadsQ.data?.threads ?? []).filter((t) =>
+    !search.trim() ? true : t.title.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="flex h-[calc(100vh-64px)] w-full">
+      {/* Sidebar */}
+      <aside
+        className={`${sidebarOpen ? "fixed inset-y-0 left-0 z-40 w-72" : "hidden"} md:relative md:flex md:w-72 md:flex-col border-r`}
+        style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface)" }}
+      >
+        <div className="flex flex-col h-full">
+          <div className="p-3 border-b" style={{ borderColor: "var(--color-border)" }}>
+            <button
+              onClick={handleNew}
+              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:opacity-90"
+              style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+            >
+              <Plus className="h-4 w-4" /> New chat
+            </button>
+            <div className="relative mt-2">
+              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "var(--color-muted-foreground)" }} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search chats"
+                className="w-full rounded-md border bg-transparent py-1.5 pl-7 pr-2 text-xs outline-none"
+                style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)" }}
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {threadsQ.isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--color-muted-foreground)" }} />
+              </div>
+            ) : filteredThreads.length === 0 ? (
+              <p className="px-2 py-4 text-xs text-center" style={{ color: "var(--color-muted-foreground)" }}>
+                No chats yet.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {filteredThreads.map((t) => {
+                  const active = t.id === threadId;
+                  return (
+                    <li key={t.id}>
+                      {renaming?.id === t.id ? (
+                        <div className="flex items-center gap-1 rounded-md p-1">
+                          <input
+                            autoFocus
+                            value={renaming.title}
+                            onChange={(e) => setRenaming({ id: t.id, title: e.target.value })}
+                            onBlur={handleRename}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleRename();
+                              if (e.key === "Escape") setRenaming(null);
+                            }}
+                            className="flex-1 rounded border bg-transparent px-2 py-1 text-sm outline-none"
+                            style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)" }}
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className="group flex items-center gap-1 rounded-md transition-colors"
+                          style={{ backgroundColor: active ? "var(--color-surface-raised)" : "transparent" }}
+                        >
+                          <Link
+                            to="/chat/$threadId"
+                            params={{ threadId: t.id }}
+                            onClick={() => setSidebarOpen(false)}
+                            className="flex flex-1 items-center gap-2 truncate px-2 py-2 text-sm transition-colors hover:opacity-90"
+                            style={{ color: "var(--color-foreground)" }}
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                            <span className="truncate">{t.title}</span>
+                          </Link>
+                          <button
+                            onClick={() => setRenaming({ id: t.id, title: t.title })}
+                            className="hidden h-7 w-7 items-center justify-center rounded text-xs opacity-0 transition-opacity group-hover:opacity-100 hover:opacity-100 md:flex"
+                            style={{ color: "var(--color-muted-foreground)" }}
+                            aria-label="Rename"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(t.id)}
+                            className="mr-1 flex h-7 w-7 items-center justify-center rounded text-xs opacity-0 transition-opacity group-hover:opacity-100 hover:opacity-100"
+                            style={{ color: "var(--color-destructive)" }}
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <div className="border-t p-3 text-[11px]" style={{ borderColor: "var(--color-border)", color: "var(--color-muted-foreground)" }}>
+            General AI chat. For exam practice, use{" "}
+            <Link to="/dashboard" className="underline" style={{ color: "var(--color-mint)" }}>
+              Study Mode
+            </Link>
+            .
+          </div>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <section className="flex flex-1 flex-col min-w-0">
+        <header className="flex items-center gap-2 border-b px-4 py-2 md:hidden" style={{ borderColor: "var(--color-border)" }}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded p-1" aria-label="Menu">
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="truncate text-sm font-medium">
+            {threadsQ.data?.threads.find((t) => t.id === threadId)?.title ?? "Chat"}
+          </span>
+        </header>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-3xl px-4 py-6">
+            {messagesQ.isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--color-mint)" }} />
+              </div>
+            ) : messages.length === 0 ? (
+              <EmptyState onPick={(t) => setInput(t)} />
+            ) : (
+              <div className="space-y-6">
+                {messages.map((m) => (
+                  <MessageBubble key={m.id} message={m} />
+                ))}
+                {status === "submitted" && (
+                  <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-muted-foreground)" }}>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-background)" }}>
+          <div className="mx-auto w-full max-w-3xl p-3">
+            <div
+              className="flex items-end gap-2 rounded-2xl border p-2 shadow-sm transition-colors focus-within:ring-2"
+              style={{
+                borderColor: "var(--color-border)",
+                backgroundColor: "var(--color-card)",
+              }}
+            >
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Ask anything…"
+                rows={1}
+                className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
+                style={{ color: "var(--color-foreground)" }}
+                disabled={busy}
+              />
+              <button
+                onClick={handleSend}
+                disabled={busy || !input.trim()}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+                aria-label="Send"
+              >
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
+              ExamPass AI may make mistakes. Verify important information.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MessageBubble({ message }: { message: UIMessage }) {
+  const isUser = message.role === "user";
+  const text = message.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+  return (
+    <div className={`flex gap-3 animate-fade-in-up ${isUser ? "justify-end" : "justify-start"}`}>
+      {!isUser && (
+        <div
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: "var(--color-mint)", color: "var(--color-primary-foreground)" }}
+        >
+          <Sparkles className="h-4 w-4" />
+        </div>
+      )}
+      <div
+        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "" : ""}`}
+        style={
+          isUser
+            ? { backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }
+            : { backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }
+        }
+      >
+        {text || <span className="opacity-50">…</span>}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ onPick }: { onPick: (s: string) => void }) {
+  const suggestions = [
+    "Explain photosynthesis simply",
+    "Help me write a short essay about climate change",
+    "Give me 5 tips to study smarter",
+    "How does compound interest work?",
+  ];
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div
+        className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+        style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+      >
+        <Sparkles className="h-7 w-7" />
+      </div>
+      <h2 className="text-2xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
+        How can I help you today?
+      </h2>
+      <p className="mt-2 text-sm" style={{ color: "var(--color-muted-foreground)" }}>
+        Ask anything — homework, ideas, advice, or general knowledge.
+      </p>
+      <div className="mt-6 grid w-full max-w-xl gap-2 sm:grid-cols-2">
+        {suggestions.map((s) => (
+          <button
+            key={s}
+            onClick={() => onPick(s)}
+            className="rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:opacity-90"
+            style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)", color: "var(--color-foreground)" }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

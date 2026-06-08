@@ -15,9 +15,12 @@ import { Route as PdfRouteImport } from './routes/pdf'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as TopicsSubjectRouteImport } from './routes/topics.$subject'
 import { Route as ResultsSessionIdRouteImport } from './routes/results.$sessionId'
 import { Route as PdfQuizRouteImport } from './routes/pdf.quiz'
+import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as QuizSubjectTopicRouteImport } from './routes/quiz.$subject.$topic'
 import { Route as ChatSubjectTopicRouteImport } from './routes/chat.$subject.$topic'
 
@@ -51,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TopicsSubjectRoute = TopicsSubjectRouteImport.update({
   id: '/topics/$subject',
   path: '/topics/$subject',
@@ -65,6 +73,16 @@ const PdfQuizRoute = PdfQuizRouteImport.update({
   id: '/quiz',
   path: '/quiz',
   getParentRoute: () => PdfRoute,
+} as any)
+const ChatThreadIdRoute = ChatThreadIdRouteImport.update({
+  id: '/chat/$threadId',
+  path: '/chat/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const QuizSubjectTopicRoute = QuizSubjectTopicRouteImport.update({
   id: '/quiz/$subject/$topic',
@@ -84,9 +102,12 @@ export interface FileRoutesByFullPath {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat/': typeof ChatIndexRoute
   '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
   '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
@@ -97,9 +118,12 @@ export interface FileRoutesByTo {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat': typeof ChatIndexRoute
   '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
   '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
@@ -111,9 +135,12 @@ export interface FileRoutesById {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/api/chat': typeof ApiChatRoute
+  '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
   '/results/$sessionId': typeof ResultsSessionIdRoute
   '/topics/$subject': typeof TopicsSubjectRoute
+  '/chat/': typeof ChatIndexRoute
   '/chat/$subject/$topic': typeof ChatSubjectTopicRoute
   '/quiz/$subject/$topic': typeof QuizSubjectTopicRoute
 }
@@ -126,9 +153,12 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
+    | '/chat/'
     | '/chat/$subject/$topic'
     | '/quiz/$subject/$topic'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +169,12 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
+    | '/chat'
     | '/chat/$subject/$topic'
     | '/quiz/$subject/$topic'
   id:
@@ -152,9 +185,12 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/api/chat'
+    | '/chat/$threadId'
     | '/pdf/quiz'
     | '/results/$sessionId'
     | '/topics/$subject'
+    | '/chat/'
     | '/chat/$subject/$topic'
     | '/quiz/$subject/$topic'
   fileRoutesById: FileRoutesById
@@ -166,8 +202,11 @@ export interface RootRouteChildren {
   PdfRoute: typeof PdfRouteWithChildren
   ProgressRoute: typeof ProgressRoute
   RankRoute: typeof RankRoute
+  ApiChatRoute: typeof ApiChatRoute
+  ChatThreadIdRoute: typeof ChatThreadIdRoute
   ResultsSessionIdRoute: typeof ResultsSessionIdRoute
   TopicsSubjectRoute: typeof TopicsSubjectRoute
+  ChatIndexRoute: typeof ChatIndexRoute
   ChatSubjectTopicRoute: typeof ChatSubjectTopicRoute
   QuizSubjectTopicRoute: typeof QuizSubjectTopicRoute
 }
@@ -216,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/topics/$subject': {
       id: '/topics/$subject'
       path: '/topics/$subject'
@@ -236,6 +282,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/pdf/quiz'
       preLoaderRoute: typeof PdfQuizRouteImport
       parentRoute: typeof PdfRoute
+    }
+    '/chat/$threadId': {
+      id: '/chat/$threadId'
+      path: '/chat/$threadId'
+      fullPath: '/chat/$threadId'
+      preLoaderRoute: typeof ChatThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/quiz/$subject/$topic': {
       id: '/quiz/$subject/$topic'
@@ -271,21 +331,14 @@ const rootRouteChildren: RootRouteChildren = {
   PdfRoute: PdfRouteWithChildren,
   ProgressRoute: ProgressRoute,
   RankRoute: RankRoute,
+  ApiChatRoute: ApiChatRoute,
+  ChatThreadIdRoute: ChatThreadIdRoute,
   ResultsSessionIdRoute: ResultsSessionIdRoute,
   TopicsSubjectRoute: TopicsSubjectRoute,
+  ChatIndexRoute: ChatIndexRoute,
   ChatSubjectTopicRoute: ChatSubjectTopicRoute,
   QuizSubjectTopicRoute: QuizSubjectTopicRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
