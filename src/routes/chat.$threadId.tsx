@@ -204,6 +204,70 @@ function ChatPage() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Projects
+  const projects = projectsQ.data?.projects ?? [];
+  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
+  const toggleProject = (id: string) =>
+    setCollapsedProjects((p) => ({ ...p, [id]: !p[id] }));
+  const [movingThreadId, setMovingThreadId] = useState<string | null>(null);
+  const [renamingProject, setRenamingProject] = useState<{ id: string; name: string } | null>(null);
+
+  const threadsByProject = useMemo(() => {
+    const map = new Map<string | null, typeof filteredThreads>();
+    for (const t of filteredThreads) {
+      const key = (t as { project_id: string | null }).project_id ?? null;
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    }
+    return map;
+  }, [filteredThreads]);
+
+  const handleNewProject = async () => {
+    const name = prompt("Project name");
+    if (!name?.trim()) return;
+    try {
+      await createProjectFn({ data: { name: name.trim() } });
+      qc.invalidateQueries({ queryKey: ["chat-projects"] });
+    } catch {
+      toast.error("Couldn't create project.");
+    }
+  };
+
+  const handleRenameProject = async () => {
+    if (!renamingProject) return;
+    const name = renamingProject.name.trim();
+    if (!name) return;
+    try {
+      await renameProjectFn({ data: { id: renamingProject.id, name } });
+      setRenamingProject(null);
+      qc.invalidateQueries({ queryKey: ["chat-projects"] });
+    } catch {
+      toast.error("Couldn't rename.");
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Delete this project? Chats inside will move to 'Uncategorized'.")) return;
+    try {
+      await deleteProjectFn({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["chat-projects"] });
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    } catch {
+      toast.error("Couldn't delete project.");
+    }
+  };
+
+  const handleMoveThread = async (threadId: string, projectId: string | null) => {
+    try {
+      await moveThreadFn({ data: { threadId, projectId } });
+      setMovingThreadId(null);
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    } catch {
+      toast.error("Couldn't move chat.");
+    }
+  };
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full">
       {/* Sidebar */}
