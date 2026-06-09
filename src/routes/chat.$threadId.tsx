@@ -221,7 +221,41 @@ function ChatPage() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
-            {threadsQ.isLoading ? (
+            {showSearchResults ? (
+              searchQ.isLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--color-muted-foreground)" }} />
+                </div>
+              ) : (searchQ.data?.hits ?? []).length === 0 ? (
+                <p className="px-2 py-4 text-xs text-center" style={{ color: "var(--color-muted-foreground)" }}>
+                  No messages match "{debounced}".
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  <li className="px-2 pb-1 pt-1 text-[10px] uppercase tracking-wide" style={{ color: "var(--color-muted-foreground)" }}>
+                    {searchQ.data!.hits.length} message{searchQ.data!.hits.length === 1 ? "" : "s"}
+                  </li>
+                  {searchQ.data!.hits.map((h) => (
+                    <li key={h.message_id}>
+                      <Link
+                        to="/chat/$threadId"
+                        params={{ threadId: h.thread_id }}
+                        onClick={() => { setSidebarOpen(false); setSearch(""); }}
+                        className="flex flex-col gap-1 rounded-md px-2 py-2 text-xs transition-colors hover:opacity-90"
+                        style={{ backgroundColor: h.thread_id === threadId ? "var(--color-surface-raised)" : "transparent", color: "var(--color-foreground)" }}
+                      >
+                        <span className="flex items-center gap-1 truncate text-[11px] font-medium">
+                          <MessageSquare className="h-3 w-3 flex-shrink-0" style={{ color: "var(--color-mint)" }} />
+                          <span className="truncate">{h.thread_title}</span>
+                          <span className="ml-auto text-[10px] opacity-60">{h.role === "user" ? "You" : "AI"}</span>
+                        </span>
+                        <span className="line-clamp-2 text-[11px] opacity-80">{h.snippet}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : threadsQ.isLoading ? (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--color-muted-foreground)" }} />
               </div>
