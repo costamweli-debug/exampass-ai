@@ -97,15 +97,18 @@ export const moveThreadToProject = createServerFn({ method: "POST" })
 
 export const createThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: unknown) =>
+    z.object({ projectId: z.string().uuid().nullable().optional() }).optional().parse(input ?? {}),
+  )
+  .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const { data: row, error } = await supabase
       .from("chat_threads")
-      .insert({ user_id: userId, title: "New chat" })
-      .select("id, title, updated_at, created_at")
+      .insert({ user_id: userId, title: "New chat", project_id: data?.projectId ?? null })
+      .select("id, title, updated_at, created_at, project_id")
       .single();
-    if (error || !data) throw new Error(error?.message || "Failed to create thread");
-    return { thread: data };
+    if (error || !row) throw new Error(error?.message || "Failed to create thread");
+    return { thread: row };
   });
 
 export const deleteThread = createServerFn({ method: "POST" })
