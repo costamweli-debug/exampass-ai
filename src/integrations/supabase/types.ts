@@ -17,6 +17,7 @@ export type Database = {
       chat_messages: {
         Row: {
           content: string
+          content_tsv: unknown
           created_at: string
           id: string
           role: string
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           content: string
+          content_tsv?: unknown
           created_at?: string
           id?: string
           role: string
@@ -33,6 +35,7 @@ export type Database = {
         }
         Update: {
           content?: string
+          content_tsv?: unknown
           created_at?: string
           id?: string
           role?: string
