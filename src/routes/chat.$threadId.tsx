@@ -51,8 +51,14 @@ function ChatPage() {
   const createFn = useServerFn(createThread);
   const deleteFn = useServerFn(deleteThread);
   const renameFn = useServerFn(renameThread);
+  const listProjectsFn = useServerFn(listProjects);
+  const createProjectFn = useServerFn(createProject);
+  const renameProjectFn = useServerFn(renameProject);
+  const deleteProjectFn = useServerFn(deleteProject);
+  const moveThreadFn = useServerFn(moveThreadToProject);
 
   const threadsQ = useQuery({ queryKey: ["chat-threads"], queryFn: () => listFn() });
+  const projectsQ = useQuery({ queryKey: ["chat-projects"], queryFn: () => listProjectsFn() });
   const messagesQ = useQuery({
     queryKey: ["chat-messages", threadId],
     queryFn: () => getFn({ data: { threadId } }),
