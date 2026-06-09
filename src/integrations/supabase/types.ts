@@ -52,11 +52,39 @@ export type Database = {
           },
         ]
       }
+      chat_projects: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_threads: {
         Row: {
           archived: boolean
           created_at: string
           id: string
+          project_id: string | null
           title: string
           updated_at: string
           user_id: string
@@ -65,6 +93,7 @@ export type Database = {
           archived?: boolean
           created_at?: string
           id?: string
+          project_id?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -73,11 +102,20 @@ export type Database = {
           archived?: boolean
           created_at?: string
           id?: string
+          project_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_threads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "chat_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pdf_documents: {
         Row: {
