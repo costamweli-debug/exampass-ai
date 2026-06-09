@@ -170,11 +170,26 @@ function ChatPage() {
     }
   };
 
-  // Sidebar search
+  // Sidebar search — title filter + debounced full-text message search
   const [search, setSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search.trim()), 250);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const searchFn = useServerFn(searchMessages);
+  const searchQ = useQuery({
+    queryKey: ["chat-search", debounced],
+    queryFn: () => searchFn({ data: { q: debounced } }),
+    enabled: debounced.length >= 2,
+    staleTime: 30_000,
+  });
+
   const filteredThreads = (threadsQ.data?.threads ?? []).filter((t) =>
     !search.trim() ? true : t.title.toLowerCase().includes(search.toLowerCase()),
   );
+  const showSearchResults = debounced.length >= 2;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
