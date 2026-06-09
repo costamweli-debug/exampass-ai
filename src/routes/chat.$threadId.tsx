@@ -268,6 +268,103 @@ function ChatPage() {
     }
   };
 
+
+  const renderThreadRow = (t: { id: string; title: string; project_id?: string | null }) => {
+    const active = t.id === threadId;
+    const isMoving = movingThreadId === t.id;
+    return (
+      <li key={t.id}>
+        {renaming?.id === t.id ? (
+          <div className="flex items-center gap-1 rounded-md p-1">
+            <input
+              autoFocus
+              value={renaming.title}
+              onChange={(e) => setRenaming({ id: t.id, title: e.target.value })}
+              onBlur={handleRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRename();
+                if (e.key === "Escape") setRenaming(null);
+              }}
+              className="flex-1 rounded border bg-transparent px-2 py-1 text-sm outline-none"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)" }}
+            />
+          </div>
+        ) : (
+          <div
+            className="group relative flex items-center gap-1 rounded-md transition-colors"
+            style={{ backgroundColor: active ? "var(--color-surface-raised)" : "transparent" }}
+          >
+            <Link
+              to="/chat/$threadId"
+              params={{ threadId: t.id }}
+              onClick={() => setSidebarOpen(false)}
+              className="flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-sm transition-colors hover:opacity-90"
+              style={{ color: "var(--color-foreground)" }}
+            >
+              <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+              <span className="truncate">{t.title}</span>
+            </Link>
+            <button
+              onClick={() => setMovingThreadId(isMoving ? null : t.id)}
+              className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+              style={{ color: "var(--color-muted-foreground)" }}
+              aria-label="Move"
+              title="Move to project"
+            >
+              <FolderInput className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => setRenaming({ id: t.id, title: t.title })}
+              className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+              style={{ color: "var(--color-muted-foreground)" }}
+              aria-label="Rename"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => handleDelete(t.id)}
+              className="mr-1 flex h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100"
+              style={{ color: "var(--color-destructive)" }}
+              aria-label="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+            {isMoving && (
+              <div
+                className="absolute right-2 top-full z-20 mt-1 w-44 rounded-md border p-1 shadow-lg"
+                style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
+              >
+                <div className="flex items-center justify-between px-2 py-1">
+                  <span className="text-[10px] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Move to</span>
+                  <button onClick={() => setMovingThreadId(null)} aria-label="Close">
+                    <X className="h-3 w-3" style={{ color: "var(--color-muted-foreground)" }} />
+                  </button>
+                </div>
+                <button
+                  onClick={() => handleMoveThread(t.id, null)}
+                  className="w-full rounded px-2 py-1 text-left text-xs hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: "var(--color-foreground)" }}
+                >
+                  No project
+                </button>
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleMoveThread(t.id, p.id)}
+                    className="w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-black/5 dark:hover:bg-white/5"
+                    style={{ color: "var(--color-foreground)" }}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  };
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full">
       {/* Sidebar */}
