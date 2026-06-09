@@ -8,13 +8,91 @@ export const listThreads = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("chat_threads")
-      .select("id, title, updated_at, created_at")
+      .select("id, title, updated_at, created_at, project_id")
       .eq("user_id", userId)
       .eq("archived", false)
       .order("updated_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     if (error) throw new Error(error.message);
     return { threads: data ?? [] };
+  });
+
+export const listProjects = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("chat_projects")
+      .select("id, name, color, created_at, updated_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { projects: data ?? [] };
+  });
+
+export const createProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ name: z.string().min(1).max(80), color: z.string().max(20).optional() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("chat_projects")
+      .insert({ user_id: userId, name: data.name, color: data.color ?? "slate" })
+      .select("id, name, color, created_at, updated_at")
+      .single();
+    if (error || !row) throw new Error(error?.message || "Failed");
+    return { project: row };
+  });
+
+export const renameProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), name: z.string().min(1).max(80) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("chat_projects")
+      .update({ name: data.name })
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    // ON DELETE SET NULL will detach threads
+    const { error } = await supabase
+      .from("chat_projects")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const moveThreadToProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ threadId: z.string().uuid(), projectId: z.string().uuid().nullable() })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("chat_threads")
+      .update({ project_id: data.projectId })
+      .eq("id", data.threadId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const createThread = createServerFn({ method: "POST" })
