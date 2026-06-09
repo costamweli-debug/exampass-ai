@@ -12,6 +12,7 @@ import {
   getThreadMessages,
   listThreads,
   renameThread,
+  searchMessages,
 } from "@/lib/chat.functions";
 import { toast } from "sonner";
 
