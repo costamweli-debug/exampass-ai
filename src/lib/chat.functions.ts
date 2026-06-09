@@ -83,3 +83,77 @@ export const getThreadMessages = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { thread, messages: rows ?? [] };
   });
+
+export type MessageSearchHit = {
+  message_id: string;
+  thread_id: string;
+  thread_title: string;
+  role: string;
+  snippet: string;
+  created_at: string;
+  rank: number;
+};
+
+export const searchMessages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ q: z.string().min(1).max(200) }).parse(input),
+  )
+  .handler(async ({ context, data }): Promise<{ hits: MessageSearchHit[] }> => {
+    const { supabase, userId } = context;
+    // Tokenize the query to a safe tsquery (prefix match per term).
+    const terms = data.q
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 8);
+    if (terms.length === 0) return { hits: [] };
+    const tsq = terms.map((t) => `${t}:*`).join(" & ");
+
+    // Run via a single SQL using rpc would need a function; do two-step instead.
+    const { data: matches, error } = await supabase
+      .from("chat_messages")
+      .select("id, thread_id, role, content, created_at")
+      .eq("user_id", userId)
+      .textSearch("content_tsv", tsq, { config: "simple" })
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw new Error(error.message);
+    if (!matches || matches.length === 0) return { hits: [] };
+
+    const threadIds = Array.from(new Set(matches.map((m) => m.thread_id)));
+    const { data: threads } = await supabase
+      .from("chat_threads")
+      .select("id, title")
+      .in("id", threadIds)
+      .eq("user_id", userId);
+    const titleById = new Map((threads ?? []).map((t) => [t.id, t.title]));
+
+    const lowerTerms = terms;
+    const makeSnippet = (content: string) => {
+      const lower = content.toLowerCase();
+      let idx = -1;
+      for (const t of lowerTerms) {
+        const i = lower.indexOf(t);
+        if (i !== -1 && (idx === -1 || i < idx)) idx = i;
+      }
+      if (idx === -1) idx = 0;
+      const start = Math.max(0, idx - 40);
+      const end = Math.min(content.length, idx + 120);
+      return (start > 0 ? "…" : "") + content.slice(start, end) + (end < content.length ? "…" : "");
+    };
+
+    const hits: MessageSearchHit[] = matches
+      .filter((m) => titleById.has(m.thread_id))
+      .map((m, i) => ({
+        message_id: m.id,
+        thread_id: m.thread_id,
+        thread_title: titleById.get(m.thread_id)!,
+        role: m.role,
+        snippet: makeSnippet(m.content),
+        created_at: m.created_at,
+        rank: i,
+      }));
+    return { hits };
+  });
