@@ -214,7 +214,7 @@ function ChatPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search chats"
+                placeholder="Search chats & messages"
                 className="w-full rounded-md border bg-transparent py-1.5 pl-7 pr-2 text-xs outline-none"
                 style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)" }}
               />
