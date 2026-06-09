@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles } from "lucide-react";
+import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createThread,
@@ -13,6 +13,11 @@ import {
   listThreads,
   renameThread,
   searchMessages,
+  listProjects,
+  createProject,
+  renameProject,
+  deleteProject,
+  moveThreadToProject,
 } from "@/lib/chat.functions";
 import { toast } from "sonner";
 
