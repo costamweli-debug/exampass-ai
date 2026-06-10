@@ -91,6 +91,7 @@ function QuizPage() {
             total: questions.length,
             percentage,
             rankLevel: rank.name,
+            level,
           },
         });
         navigate({ to: "/results/$sessionId", params: { sessionId: result.session.id } });
