@@ -4,11 +4,30 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+type Level = "NSSCO" | "AS";
+
+function levelGuidance(level: Level) {
+  if (level === "AS") {
+    return {
+      label: "Cambridge AS Level",
+      style:
+        "Use AS Level depth: precise terminology, multi-step reasoning, analysis and evaluation. Questions should test application, not recall. Expect synthesis across topics where appropriate.",
+      explain:
+        "Explanations should be analytical: definitions, mechanisms, and why alternatives fail. Reference relevant principles or formulae briefly.",
+    };
+  }
+  return {
+    label: "NSSCO (Grade 11–12)",
+    style:
+      "Use NSSCO Grade 11–12 difficulty: clear exam-style phrasing, mostly recall and direct application, occasional 'why' questions. Avoid university-level depth.",
+    explain:
+      "Explanations should be short, direct, and grounded in core concepts. Avoid advanced jargon. One clean reason why the answer is correct.",
+  };
+}
+
 async function callAI(messages: Array<{ role: string; content: string }>, model = "google/gemini-3-flash-preview") {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  if (!LOVABLE_API_KEY) {
-    throw new Error("AI service not configured");
-  }
+  if (!LOVABLE_API_KEY) throw new Error("AI service not configured");
 
   const response = await fetch(LOVABLE_AI_URL, {
     method: "POST",
@@ -16,11 +35,7 @@ async function callAI(messages: Array<{ role: string; content: string }>, model 
       Authorization: `Bearer ${LOVABLE_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.4,
-    }),
+    body: JSON.stringify({ model, messages, temperature: 0.4 }),
   });
 
   if (!response.ok) {
@@ -44,31 +59,32 @@ const quizResponseSchema = z.object({
   questions: z.array(quizQuestionSchema).length(10),
 });
 
+const levelSchema = z.enum(["NSSCO", "AS"]).default("NSSCO");
+
 export const generateQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { subject: string; topic: string }) => data)
+  .inputValidator((data: { subject: string; topic: string; level?: Level }) =>
+    z.object({ subject: z.string().min(1).max(120), topic: z.string().min(1).max(120), level: levelSchema }).parse(data),
+  )
   .handler(async ({ data }) => {
-    const systemPrompt = `You are ExamPass AI — a calm, highly intelligent, strategic exam-question writer for Namibia NSSCO. Tone: precise, slightly cold, never warm. No filler, no encouragement, no emojis. Generate exactly 10 multiple-choice exam questions.
+    const lg = levelGuidance(data.level);
+    const systemPrompt = `You are ExamPass AI — a calm, highly intelligent, strategic exam-question writer for Namibian students preparing for ${lg.label}. Tone: precise, slightly cold, never warm. No filler, no encouragement, no emojis. Generate exactly 10 multiple-choice exam questions.
+
+${lg.style}
 
 Strict rules:
 - Each question must have exactly 4 options (A, B, C, D)
-- NSSCO Grade 11–12 level, exam-grade phrasing
 - Include the correct answer index (0–3)
-- Explanation: one short, direct sentence — no padding, no encouragement
+- Explanation: one short, direct sentence — no padding
 - Return ONLY valid JSON, no markdown, no commentary:
 
 {
   "questions": [
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "correctAnswer": 0,
-      "explanation": "..."
-    }
+    {"question":"...","options":["...","...","...","..."],"correctAnswer":0,"explanation":"..."}
   ]
 }`;
 
-    const userPrompt = `Generate 10 NSSCO exam questions for ${data.subject} on the topic: ${data.topic}. Make them challenging but fair for a Grade 11-12 student.`;
+    const userPrompt = `Generate 10 ${lg.label} exam questions for ${data.subject} on the topic: ${data.topic}.`;
 
     const content = await callAI([
       { role: "system", content: systemPrompt },
@@ -87,22 +103,35 @@ Strict rules:
 
 export const explainAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { question: string; correctAnswer: string; subject: string; topic: string }) => data)
+  .inputValidator((data: { question: string; correctAnswer: string; subject: string; topic: string; level?: Level }) =>
+    z
+      .object({
+        question: z.string().min(1).max(2000),
+        correctAnswer: z.string().min(1).max(500),
+        subject: z.string().min(1).max(120),
+        topic: z.string().min(1).max(120),
+        level: levelSchema,
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    const prompt = `NSSCO ${data.subject} — ${data.topic}.
+    const lg = levelGuidance(data.level);
+    const prompt = `${lg.label} ${data.subject} — ${data.topic}.
 
 Question: "${data.question}"
 Correct answer: "${data.correctAnswer}"
+
+${lg.explain}
 
 Respond in exactly this structure, no headings, no fluff:
 1. Direct answer (one sentence: state why it is correct).
 2. Breakdown (2–4 short lines, plain reasoning).
 3. Strategic insight (one line: a shortcut, common trap, or pattern to remember).
 
-Tone: calm, intelligent, slightly cold, straight to the point. Do not praise the student. Do not exceed 160 words.`;
+Tone: calm, intelligent, slightly cold, straight to the point. Do not praise the student. Do not exceed 180 words.`;
 
     const explanation = await callAI([
-      { role: "system", content: "You are ExamPass AI: a strict, brilliant mentor for NSSCO students. Sharp, precise, never warm. You make students think — you do not coddle." },
+      { role: "system", content: `You are ExamPass AI: a strict, brilliant mentor for ${lg.label} students. Sharp, precise, never warm.` },
       { role: "user", content: prompt },
     ]);
 
@@ -111,20 +140,31 @@ Tone: calm, intelligent, slightly cold, straight to the point. Do not praise the
 
 export const chatWithSubject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { messages: Array<{ role: string; content: string }>; subject: string; topic: string }) => data)
+  .inputValidator((data: { messages: Array<{ role: string; content: string }>; subject: string; topic: string; level?: Level }) =>
+    z
+      .object({
+        messages: z.array(z.object({ role: z.string(), content: z.string().max(8000) })).max(40),
+        subject: z.string().min(1).max(120),
+        topic: z.string().min(1).max(120),
+        level: levelSchema,
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    const systemPrompt = `You are ExamPass AI — a calm, highly intelligent, strategic tutor for Namibian NSSCO ${data.subject}, currently on the topic: ${data.topic}.
+    const lg = levelGuidance(data.level);
+    const systemPrompt = `You are ExamPass AI — a calm, highly intelligent, strategic tutor for Namibian ${lg.label} ${data.subject}, currently on the topic: ${data.topic}.
+
+${lg.style}
 
 Persona:
 - Disciplined, precise, slightly cold but helpful.
-- Never over-explain. Never praise. No emojis. No filler ("great question", "of course", "happy to help").
-- Guide step-by-step. Make the student think — ask one short probing question when useful.
-- Occasionally challenge the student briefly ("Think carefully. The mistake here is obvious once you notice this…").
+- Never over-explain. Never praise. No emojis. No filler.
+- Guide step-by-step. Make the student think.
 
 Strict rules:
-- Only answer questions strictly within ${data.subject} → ${data.topic}.
-- If the user drifts off-topic, respond exactly with a single line redirect, e.g.: "Focus. That question is outside your selected topic." Then stop.
-- Answers: short direct point first, then a clean breakdown, then (when relevant) one strategic insight or shortcut.
+- Only answer questions strictly within ${data.subject} → ${data.topic} at ${lg.label}.
+- If the user drifts off-topic, reply with one line: "Focus. That question is outside your selected topic." Then stop.
+- Answers: short direct point first, then a clean breakdown, then (when relevant) one strategic insight.
 - Keep responses tight. No padding.`;
 
     const response = await callAI([
@@ -137,14 +177,15 @@ Strict rules:
 
 export const summarizePDF = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { text: string; subject: string }) => data)
+  .inputValidator((data: { text: string; subject: string; level?: Level }) =>
+    z.object({ text: z.string().min(1), subject: z.string().min(1).max(120), level: levelSchema }).parse(data),
+  )
   .handler(async ({ data }) => {
-    const prompt = `Summarize this ${data.subject} material into clean, exam-focused key points. Structured bullets only. No filler, no encouragement. End with one short "Strategic focus:" line naming what the student should prioritise.
-
-${data.text.slice(0, 8000)}`;
+    const lg = levelGuidance(data.level);
+    const prompt = `Summarize this ${data.subject} material into clean, exam-focused key points for a ${lg.label} student. Structured bullets only. No filler. End with one short "Strategic focus:" line.\n\n${data.text.slice(0, 8000)}`;
 
     const summary = await callAI([
-      { role: "system", content: "You are ExamPass AI: a strict, brilliant NSSCO mentor. Calm, precise, slightly cold. No filler." },
+      { role: "system", content: `You are ExamPass AI: a strict, brilliant ${lg.label} mentor. Calm, precise.` },
       { role: "user", content: prompt },
     ]);
 
@@ -153,29 +194,31 @@ ${data.text.slice(0, 8000)}`;
 
 export const generateQuizFromPDF = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { text: string; subject: string; topic: string }) => data)
+  .inputValidator((data: { text: string; subject: string; topic: string; level?: Level }) =>
+    z
+      .object({
+        text: z.string().min(1),
+        subject: z.string().min(1).max(120),
+        topic: z.string().min(1).max(120),
+        level: levelSchema,
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    const systemPrompt = `You are ExamPass AI — calm, strategic, precise. Generate exactly 10 NSSCO-level multiple-choice questions strictly from the provided text.
+    const lg = levelGuidance(data.level);
+    const systemPrompt = `You are ExamPass AI — calm, strategic, precise. Generate exactly 10 ${lg.label} multiple-choice questions strictly from the provided text.
+
+${lg.style}
 
 Strict rules:
-- 4 options (A, B, C, D) per question
-- Exam-grade phrasing, NSSCO Grade 11–12
-- correctAnswer is an index 0–3
-- Explanation: one short, direct sentence — no padding
+- 4 options (A, B, C, D)
+- correctAnswer is index 0–3
+- Explanation: one short sentence
 - Return ONLY raw JSON, no markdown:
 
-{
-  "questions": [
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "correctAnswer": 0,
-      "explanation": "..."
-    }
-  ]
-}`;
+{"questions":[{"question":"...","options":["...","...","...","..."],"correctAnswer":0,"explanation":"..."}]}`;
 
-    const userPrompt = `Generate 10 NSSCO exam questions for ${data.subject} on ${data.topic} based on this text:\n\n${data.text.slice(0, 8000)}`;
+    const userPrompt = `Generate 10 ${lg.label} exam questions for ${data.subject} on ${data.topic} from this text:\n\n${data.text.slice(0, 8000)}`;
 
     const content = await callAI([
       { role: "system", content: systemPrompt },
