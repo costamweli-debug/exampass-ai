@@ -38,6 +38,7 @@ export const saveQuizSession = createServerFn({ method: "POST" })
         total: data.total,
         percentage: data.percentage,
         rank_level: data.rankLevel,
+        level,
       })
       .select()
       .single();
