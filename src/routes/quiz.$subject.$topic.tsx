@@ -113,7 +113,7 @@ function QuizPage() {
           Generating your quiz...
         </h2>
         <p className="max-w-md text-center" style={{ color: "var(--color-muted-foreground)" }}>
-          AI is creating 10 NSSCO-style questions for {subject.name} • {topic.name}.
+          AI is creating 10 {level === "AS" ? "AS Level" : "NSSCO"} questions for {subject.name} • {topic.name}.
         </p>
       </div>
     );
