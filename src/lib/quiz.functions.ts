@@ -20,9 +20,11 @@ export const saveQuizSession = createServerFn({ method: "POST" })
     total: number;
     percentage: number;
     rankLevel: string;
+    level?: "NSSCO" | "AS";
   }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const level = data.level === "AS" ? "AS" : "NSSCO";
 
     const { data: session, error } = await supabase
       .from("quiz_sessions")
@@ -36,6 +38,7 @@ export const saveQuizSession = createServerFn({ method: "POST" })
         total: data.total,
         percentage: data.percentage,
         rank_level: data.rankLevel,
+        level,
       })
       .select()
       .single();
