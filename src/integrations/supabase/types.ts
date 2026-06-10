@@ -117,6 +117,127 @@ export type Database = {
           },
         ]
       }
+      curriculum_subjects: {
+        Row: {
+          active: boolean
+          category: string
+          color: string
+          created_at: string
+          description: string
+          emoji: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string
+          emoji?: string
+          id: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string
+          emoji?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      curriculum_subtopics: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          topic_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          topic_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_subtopics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_topics: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          level: string
+          name: string
+          slug: string
+          sort_order: number
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          level: string
+          name: string
+          slug: string
+          sort_order?: number
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          level?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_topics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_documents: {
         Row: {
           created_at: string
@@ -153,6 +274,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          level: string
           updated_at: string
           user_id: string
           username: string | null
@@ -162,6 +284,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          level?: string
           updated_at?: string
           user_id: string
           username?: string | null
@@ -171,6 +294,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          level?: string
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -224,6 +348,7 @@ export type Database = {
           answers: Json
           created_at: string
           id: string
+          level: string
           percentage: number
           questions: Json
           rank_level: string
@@ -237,6 +362,7 @@ export type Database = {
           answers?: Json
           created_at?: string
           id?: string
+          level?: string
           percentage?: number
           questions?: Json
           rank_level?: string
@@ -250,6 +376,7 @@ export type Database = {
           answers?: Json
           created_at?: string
           id?: string
+          level?: string
           percentage?: number
           questions?: Json
           rank_level?: string
