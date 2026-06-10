@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Loader2, Zap, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSubjectById, getTopicById, getRank } from "@/lib/subjects";
+import { getRank } from "@/lib/subjects";
 import { generateQuiz } from "@/lib/ai.functions";
 import { saveQuizSession, type QuizQuestion } from "@/lib/quiz.functions";
+import { listSubjects, listTopics } from "@/lib/curriculum.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { useLevel } from "@/hooks/use-level";
 import { toast, Toaster } from "sonner";
 
 export const Route = createFileRoute("/quiz/$subject/$topic")({
@@ -23,17 +26,26 @@ export const Route = createFileRoute("/quiz/$subject/$topic")({
 });
 
 function QuizPage() {
-  const { subject: subjectId, topic: topicId } = Route.useParams();
+  const { subject: subjectId, topic: topicSlug } = Route.useParams();
   const navigate = useNavigate();
-  const subject = getSubjectById(subjectId);
-  const topic = getTopicById(subjectId, topicId);
+  const { level } = useLevel();
+
+  const fetchSubjects = useServerFn(listSubjects);
+  const fetchTopics = useServerFn(listTopics);
+  const { data: subjectsData } = useQuery({ queryKey: ["subjects"], queryFn: () => fetchSubjects() });
+  const { data: topicsData } = useQuery({
+    queryKey: ["topics", subjectId, level],
+    queryFn: () => fetchTopics({ data: { subjectId, level } }),
+  });
+
+  const subject = subjectsData?.subjects.find((s) => s.id === subjectId);
+  const topic = topicsData?.topics.find((t) => t.slug === topicSlug);
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [finished, setFinished] = useState(false);
 
   const generateFn = useServerFn(generateQuiz);
   const saveFn = useServerFn(saveQuizSession);
@@ -41,16 +53,15 @@ function QuizPage() {
   useEffect(() => {
     if (!subject || !topic) return;
     setLoading(true);
-    generateFn({ data: { subject: subject.name, topic: topic.name } })
-      .then((res) => {
-        setQuestions(res.questions);
-      })
+    generateFn({ data: { subject: subject.name, topic: topic.name, level } })
+      .then((res) => setQuestions(res.questions))
       .catch((err) => {
         console.error(err);
         toast.error("Failed to generate quiz. Please try again.");
       })
       .finally(() => setLoading(false));
-  }, [subjectId, topicId]);
+  }, [subjectId, topicSlug, level]);
+
 
   if (!subject || !topic) {
     return <div className="px-4 py-12 text-center">Invalid subject or topic.</div>;
