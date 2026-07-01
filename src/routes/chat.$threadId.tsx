@@ -336,6 +336,8 @@ function ChatPage() {
   const renderThreadRow = (t: { id: string; title: string; project_id?: string | null }) => {
     const active = t.id === threadId;
     const isMoving = movingThreadId === t.id;
+    const isTagging = tagMenuFor === t.id;
+    const rowTags = tagsByThread.get(t.id) ?? [];
     return (
       <li key={t.id}>
         {renaming?.id === t.id ? (
@@ -355,44 +357,73 @@ function ChatPage() {
           </div>
         ) : (
           <div
-            className="group relative flex items-center gap-1 rounded-md transition-colors"
+            className="group relative rounded-md transition-colors"
             style={{ backgroundColor: active ? "var(--color-surface-raised)" : "transparent" }}
           >
-            <Link
-              to="/chat/$threadId"
-              params={{ threadId: t.id }}
-              onClick={() => setSidebarOpen(false)}
-              className="flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-sm transition-colors hover:opacity-90"
-              style={{ color: "var(--color-foreground)" }}
-            >
-              <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
-              <span className="truncate">{t.title}</span>
-            </Link>
-            <button
-              onClick={() => setMovingThreadId(isMoving ? null : t.id)}
-              className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
-              style={{ color: "var(--color-muted-foreground)" }}
-              aria-label="Move"
-              title="Move to project"
-            >
-              <FolderInput className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => setRenaming({ id: t.id, title: t.title })}
-              className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
-              style={{ color: "var(--color-muted-foreground)" }}
-              aria-label="Rename"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => handleDelete(t.id)}
-              className="mr-1 flex h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100"
-              style={{ color: "var(--color-destructive)" }}
-              aria-label="Delete"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <Link
+                to="/chat/$threadId"
+                params={{ threadId: t.id }}
+                onClick={() => setSidebarOpen(false)}
+                className="flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-sm transition-colors hover:opacity-90"
+                style={{ color: "var(--color-foreground)" }}
+              >
+                <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                <span className="truncate">{t.title}</span>
+              </Link>
+              <button
+                onClick={() => { setTagMenuFor(isTagging ? null : t.id); setMovingThreadId(null); }}
+                className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+                style={{ color: "var(--color-muted-foreground)" }}
+                aria-label="Tags"
+                title="Add/remove tags"
+              >
+                <TagIcon className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => { setMovingThreadId(isMoving ? null : t.id); setTagMenuFor(null); }}
+                className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+                style={{ color: "var(--color-muted-foreground)" }}
+                aria-label="Move"
+                title="Move to project"
+              >
+                <FolderInput className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => setRenaming({ id: t.id, title: t.title })}
+                className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+                style={{ color: "var(--color-muted-foreground)" }}
+                aria-label="Rename"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => handleDelete(t.id)}
+                className="mr-1 flex h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100"
+                style={{ color: "var(--color-destructive)" }}
+                aria-label="Delete"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+            {rowTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 px-2 pb-1.5">
+                {rowTags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
+                    className="rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
+                    style={{
+                      backgroundColor: "color-mix(in oklab, var(--color-mint) 20%, transparent)",
+                      color: "var(--color-mint)",
+                    }}
+                    title={`Filter by ${tag.name}`}
+                  >
+                    #{tag.name}
+                  </button>
+                ))}
+              </div>
+            )}
             {isMoving && (
               <div
                 className="absolute right-2 top-full z-20 mt-1 w-44 rounded-md border p-1 shadow-lg"
@@ -421,6 +452,52 @@ function ChatPage() {
                     {p.name}
                   </button>
                 ))}
+              </div>
+            )}
+            {isTagging && (
+              <div
+                className="absolute right-2 top-full z-20 mt-1 w-52 rounded-md border p-1 shadow-lg"
+                style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
+              >
+                <div className="flex items-center justify-between px-2 py-1">
+                  <span className="text-[10px] uppercase" style={{ color: "var(--color-muted-foreground)" }}>Tags</span>
+                  <button onClick={() => setTagMenuFor(null)} aria-label="Close">
+                    <X className="h-3 w-3" style={{ color: "var(--color-muted-foreground)" }} />
+                  </button>
+                </div>
+                {tags.length === 0 ? (
+                  <p className="px-2 py-2 text-[11px]" style={{ color: "var(--color-muted-foreground)" }}>
+                    No tags yet.
+                  </p>
+                ) : (
+                  <div className="max-h-56 overflow-y-auto">
+                    {tags.map((tag) => {
+                      const attached = rowTags.some((rt) => rt.id === tag.id);
+                      return (
+                        <label
+                          key={tag.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs hover:bg-black/5 dark:hover:bg-white/5"
+                          style={{ color: "var(--color-foreground)" }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={attached}
+                            onChange={(e) => handleToggleTagOnThread(t.id, tag.id, e.target.checked)}
+                            className="h-3 w-3"
+                          />
+                          <span className="truncate">#{tag.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  onClick={handleNewTag}
+                  className="mt-1 flex w-full items-center gap-1 rounded border-t px-2 py-1.5 text-[11px] hover:opacity-80"
+                  style={{ borderColor: "var(--color-border)", color: "var(--color-mint)" }}
+                >
+                  <Plus className="h-3 w-3" /> New tag
+                </button>
               </div>
             )}
           </div>
