@@ -574,6 +574,75 @@ function ChatPage() {
               </div>
             ) : (
               <div className="space-y-3">
+                {/* Tags filter */}
+                <div>
+                  <div className="flex items-center justify-between px-2 pt-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-muted-foreground)" }}>
+                      Tags
+                    </span>
+                    <button
+                      onClick={handleNewTag}
+                      className="flex h-6 w-6 items-center justify-center rounded hover:opacity-80"
+                      style={{ color: "var(--color-muted-foreground)" }}
+                      aria-label="New tag"
+                      title="New tag"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1 px-2">
+                    {activeTagId && (
+                      <button
+                        onClick={() => setActiveTagId(null)}
+                        className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px]"
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-muted-foreground)" }}
+                      >
+                        <X className="h-2.5 w-2.5" /> Clear
+                      </button>
+                    )}
+                    {tags.length === 0 ? (
+                      <span className="text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
+                        No tags yet.
+                      </span>
+                    ) : (
+                      tags.map((tag) => {
+                        const active = activeTagId === tag.id;
+                        return (
+                          <span
+                            key={tag.id}
+                            className="group/tag inline-flex items-center gap-0.5 rounded-full text-[10px] font-medium leading-none"
+                          >
+                            <button
+                              onClick={() => setActiveTagId(active ? null : tag.id)}
+                              className="rounded-full px-1.5 py-0.5 transition-opacity"
+                              style={{
+                                backgroundColor: active
+                                  ? "var(--color-mint)"
+                                  : "color-mix(in oklab, var(--color-mint) 18%, transparent)",
+                                color: active
+                                  ? "var(--color-primary-foreground)"
+                                  : "var(--color-mint)",
+                              }}
+                            >
+                              #{tag.name}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTag(tag.id)}
+                              className="hidden h-4 w-4 items-center justify-center rounded-full opacity-0 group-hover/tag:opacity-100 md:flex"
+                              style={{ color: "var(--color-destructive)" }}
+                              aria-label={`Delete tag ${tag.name}`}
+                              title="Delete tag"
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          </span>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+
                 {/* Projects header */}
                 <div className="flex items-center justify-between px-2 pt-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-muted-foreground)" }}>
