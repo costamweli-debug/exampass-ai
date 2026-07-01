@@ -238,3 +238,86 @@ export const searchMessages = createServerFn({ method: "POST" })
       }));
     return { hits };
   });
+
+// ============ TAGS ============
+
+export const listTags = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: tags, error } = await supabase
+      .from("chat_tags")
+      .select("id, name, color, created_at")
+      .eq("user_id", userId)
+      .order("name", { ascending: true });
+    if (error) throw new Error(error.message);
+    const { data: links, error: e2 } = await supabase
+      .from("chat_thread_tags")
+      .select("thread_id, tag_id")
+      .eq("user_id", userId);
+    if (e2) throw new Error(e2.message);
+    return { tags: tags ?? [], links: links ?? [] };
+  });
+
+export const createTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ name: z.string().min(1).max(40), color: z.string().max(20).optional() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("chat_tags")
+      .insert({ user_id: userId, name: data.name.trim(), color: data.color ?? "mint" })
+      .select("id, name, color, created_at")
+      .single();
+    if (error || !row) throw new Error(error?.message || "Failed");
+    return { tag: row };
+  });
+
+export const deleteTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("chat_tags")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setThreadTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        threadId: z.string().uuid(),
+        tagId: z.string().uuid(),
+        attach: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    if (data.attach) {
+      const { error } = await supabase
+        .from("chat_thread_tags")
+        .upsert(
+          { thread_id: data.threadId, tag_id: data.tagId, user_id: userId },
+          { onConflict: "thread_id,tag_id" },
+        );
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("chat_thread_tags")
+        .delete()
+        .eq("thread_id", data.threadId)
+        .eq("tag_id", data.tagId)
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
