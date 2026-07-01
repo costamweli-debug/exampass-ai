@@ -213,6 +213,61 @@ function ChatPage() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Tags
+  const tags = tagsQ.data?.tags ?? [];
+  const tagLinks = tagsQ.data?.links ?? [];
+  const tagsByThread = useMemo(() => {
+    const map = new Map<string, typeof tags>();
+    for (const l of tagLinks) {
+      const tag = tags.find((x) => x.id === l.tag_id);
+      if (!tag) continue;
+      const arr = map.get(l.thread_id) ?? [];
+      arr.push(tag);
+      map.set(l.thread_id, arr);
+    }
+    return map;
+  }, [tags, tagLinks]);
+
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  const [tagMenuFor, setTagMenuFor] = useState<string | null>(null);
+
+  const visibleThreads = useMemo(() => {
+    if (!activeTagId) return filteredThreads;
+    const allowed = new Set(
+      tagLinks.filter((l) => l.tag_id === activeTagId).map((l) => l.thread_id),
+    );
+    return filteredThreads.filter((t) => allowed.has(t.id));
+  }, [filteredThreads, activeTagId, tagLinks]);
+
+  const handleNewTag = async () => {
+    const name = prompt("Tag name");
+    if (!name?.trim()) return;
+    try {
+      await createTagFn({ data: { name: name.trim() } });
+      qc.invalidateQueries({ queryKey: ["chat-tags"] });
+    } catch {
+      toast.error("Couldn't create tag.");
+    }
+  };
+  const handleDeleteTag = async (id: string) => {
+    if (!confirm("Delete this tag? It will be removed from all chats.")) return;
+    try {
+      await deleteTagFn({ data: { id } });
+      if (activeTagId === id) setActiveTagId(null);
+      qc.invalidateQueries({ queryKey: ["chat-tags"] });
+    } catch {
+      toast.error("Couldn't delete tag.");
+    }
+  };
+  const handleToggleTagOnThread = async (threadId: string, tagId: string, attach: boolean) => {
+    try {
+      await setThreadTagFn({ data: { threadId, tagId, attach } });
+      qc.invalidateQueries({ queryKey: ["chat-tags"] });
+    } catch {
+      toast.error("Couldn't update tag.");
+    }
+  };
+
   // Projects
   const projects = projectsQ.data?.projects ?? [];
   const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
