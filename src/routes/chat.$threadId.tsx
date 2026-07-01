@@ -277,15 +277,15 @@ function ChatPage() {
   const [renamingProject, setRenamingProject] = useState<{ id: string; name: string } | null>(null);
 
   const threadsByProject = useMemo(() => {
-    const map = new Map<string | null, typeof filteredThreads>();
-    for (const t of filteredThreads) {
+    const map = new Map<string | null, typeof visibleThreads>();
+    for (const t of visibleThreads) {
       const key = (t as { project_id: string | null }).project_id ?? null;
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
     }
     return map;
-  }, [filteredThreads]);
+  }, [visibleThreads]);
 
   const handleNewProject = async () => {
     const name = prompt("Project name");
