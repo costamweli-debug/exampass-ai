@@ -91,16 +91,17 @@ export const Route = createFileRoute("/api/chat")({
               .join("")
               .trim();
             if (text) {
+              const displayContent = attachmentChips ? `${attachmentChips}\n\n${text}` : text;
               await supabase.from("chat_messages").insert({
                 thread_id: threadId,
                 user_id: userId,
                 role: "user",
-                content: text,
+                content: displayContent,
               });
 
               // Auto-title if still "New chat"
               if (thread.title === "New chat") {
-                const title = text.slice(0, 60).replace(/\s+/g, " ").trim();
+                const title = (text || attachmentChips).slice(0, 60).replace(/\s+/g, " ").trim();
                 await supabase
                   .from("chat_threads")
                   .update({ title: title || "New chat" })
@@ -119,9 +120,13 @@ export const Route = createFileRoute("/api/chat")({
           const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
           const model = gateway("google/gemini-3-flash-preview");
 
+          const systemPrompt = attachmentContext
+            ? `${GENERAL_SYSTEM}\n\nThe user has attached the following file(s). Use them as authoritative context for this turn. When they ask to summarize, explain, or generate a quiz, base your answer on the attachment content.\n\n${attachmentContext}`
+            : GENERAL_SYSTEM;
+
           const result = streamText({
             model,
-            system: GENERAL_SYSTEM,
+            system: systemPrompt,
             messages: await convertToModelMessages(messages),
             onFinish: async ({ text }) => {
               if (text?.trim()) {
