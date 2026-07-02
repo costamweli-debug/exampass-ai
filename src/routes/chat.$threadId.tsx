@@ -131,6 +131,10 @@ function ChatPage() {
     [messagesQ.data],
   );
 
+  // Attachment ids queued for the next send — kept in a ref so the transport
+  // fetch (which closes over stable state) always reads the freshest value.
+  const pendingIdsRef = useRef<string[]>([]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -140,12 +144,14 @@ function ChatPage() {
           const token = data.session?.access_token;
           const headers = new Headers(init?.headers);
           if (token) headers.set("Authorization", `Bearer ${token}`);
-          // include threadId in body
           let body = init?.body;
           if (typeof body === "string") {
             try {
               const parsed = JSON.parse(body);
               parsed.threadId = threadId;
+              if (pendingIdsRef.current.length > 0) {
+                parsed.attachmentIds = pendingIdsRef.current;
+              }
               body = JSON.stringify(parsed);
             } catch {
               // leave as-is
@@ -180,9 +186,15 @@ function ChatPage() {
 
   // Composer
   const [input, setInput] = useState("");
+  const [pending, setPending] = useState<PendingAttachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
+  const uploading = pending.some((p) => p.status === "extracting");
+
+  const createAttachmentFn = useServerFn(createAttachment);
+  const extractImageFn = useServerFn(extractImageText);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -192,12 +204,96 @@ function ChatPage() {
     inputRef.current?.focus();
   }, [threadId]);
 
+  // Reset pending when switching threads
+  useEffect(() => {
+    setPending([]);
+    pendingIdsRef.current = [];
+  }, [threadId]);
+
+  const handleFilesPicked = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const list = Array.from(files).slice(0, 5);
+    for (const file of list) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is too large (max 15 MB).`);
+        continue;
+      }
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const isImage = file.type.startsWith("image/");
+      if (!isPdf && !isImage) {
+        toast.error(`${file.name}: only PDFs and images are supported.`);
+        continue;
+      }
+      const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const kind: "pdf" | "image" = isPdf ? "pdf" : "image";
+      setPending((prev) => [
+        ...prev,
+        { tempId, kind, name: file.name, mime: file.type || (isPdf ? "application/pdf" : "image/*"), size: file.size, status: "extracting" },
+      ]);
+      (async () => {
+        try {
+          let extractedText = "";
+          if (isPdf) {
+            extractedText = await extractPdfText(file);
+          } else {
+            const dataUrl = await fileToDataUrl(file);
+            const res = await extractImageFn({ data: { dataUrl, name: file.name } });
+            extractedText = res.text;
+          }
+          const { attachment } = await createAttachmentFn({
+            data: {
+              threadId,
+              kind,
+              name: file.name,
+              mime: file.type || (isPdf ? "application/pdf" : "image/png"),
+              size: file.size,
+              extractedText,
+            },
+          });
+          pendingIdsRef.current = [...pendingIdsRef.current, attachment.id];
+          setPending((prev) =>
+            prev.map((p) => (p.tempId === tempId ? { ...p, id: attachment.id, status: "ready" } : p)),
+          );
+        } catch (err) {
+          console.error(err);
+          const msg = err instanceof Error ? err.message : "Upload failed";
+          setPending((prev) =>
+            prev.map((p) => (p.tempId === tempId ? { ...p, status: "error", error: msg } : p)),
+          );
+          toast.error(`${file.name}: ${msg}`);
+        }
+      })();
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePending = (tempId: string) => {
+    setPending((prev) => {
+      const target = prev.find((p) => p.tempId === tempId);
+      if (target?.id) {
+        pendingIdsRef.current = pendingIdsRef.current.filter((id) => id !== target.id);
+      }
+      return prev.filter((p) => p.tempId !== tempId);
+    });
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || busy) return;
+    const readyIds = pending.filter((p) => p.status === "ready" && p.id).map((p) => p.id as string);
+    if (busy || uploading) return;
+    if (!text && readyIds.length === 0) return;
+    // The transport reads from pendingIdsRef; make sure it reflects only ready ids.
+    pendingIdsRef.current = readyIds;
+    const messageText = text || (readyIds.length > 0 ? "Please review the attached file(s)." : "");
     setInput("");
-    await sendMessage({ text });
+    setPending([]);
+    try {
+      await sendMessage({ text: messageText });
+    } finally {
+      pendingIdsRef.current = [];
+    }
   };
+
 
   // New chat
   const handleNew = async () => {
