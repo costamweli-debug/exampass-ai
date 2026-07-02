@@ -947,6 +947,37 @@ function ChatPage() {
 
         <div className="border-t" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-background)" }}>
           <div className="mx-auto w-full max-w-3xl p-3">
+            {pending.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {pending.map((p) => (
+                  <div
+                    key={p.tempId}
+                    className="flex items-center gap-2 rounded-lg border px-2 py-1 text-xs"
+                    style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
+                  >
+                    {p.kind === "pdf" ? (
+                      <FileText className="h-3.5 w-3.5" style={{ color: "var(--color-primary)" }} />
+                    ) : (
+                      <ImageIcon className="h-3.5 w-3.5" style={{ color: "var(--color-primary)" }} />
+                    )}
+                    <span className="max-w-[180px] truncate" style={{ color: "var(--color-foreground)" }}>
+                      {p.name}
+                    </span>
+                    {p.status === "extracting" && <Loader2 className="h-3 w-3 animate-spin" />}
+                    {p.status === "error" && (
+                      <span className="text-red-500" title={p.error}>failed</span>
+                    )}
+                    <button
+                      onClick={() => removePending(p.tempId)}
+                      className="opacity-60 hover:opacity-100"
+                      aria-label="Remove attachment"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className="flex items-end gap-2 rounded-2xl border p-2 shadow-sm transition-colors focus-within:ring-2"
               style={{
@@ -954,6 +985,24 @@ function ChatPage() {
                 backgroundColor: "var(--color-card)",
               }}
             >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFilesPicked(e.target.files)}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/10"
+                style={{ color: "var(--color-muted-foreground)" }}
+                aria-label="Attach file"
+                title="Attach PDF or image (max 15 MB)"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -964,7 +1013,7 @@ function ChatPage() {
                     handleSend();
                   }
                 }}
-                placeholder="Ask anything…"
+                placeholder={uploading ? "Processing attachment…" : "Ask anything, or attach a PDF / image…"}
                 rows={1}
                 className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
                 style={{ color: "var(--color-foreground)" }}
@@ -972,7 +1021,7 @@ function ChatPage() {
               />
               <button
                 onClick={handleSend}
-                disabled={busy || !input.trim()}
+                disabled={busy || uploading || (!input.trim() && !pending.some((p) => p.status === "ready"))}
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
                 aria-label="Send"
@@ -980,6 +1029,7 @@ function ChatPage() {
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
+
             <p className="mt-2 text-center text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
               ExamPass AI may make mistakes. Verify important information.
             </p>
