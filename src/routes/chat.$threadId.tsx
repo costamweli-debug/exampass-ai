@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon, Paperclip, FileText, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createThread,
@@ -23,7 +23,60 @@ import {
   deleteTag,
   setThreadTag,
 } from "@/lib/chat.functions";
+import { createAttachment, extractImageText } from "@/lib/attachments.functions";
 import { toast } from "sonner";
+
+const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
+
+type PendingAttachment = {
+  tempId: string;
+  id?: string; // set once saved server-side
+  kind: "pdf" | "image";
+  name: string;
+  mime: string;
+  size: number;
+  status: "extracting" | "ready" | "error";
+  error?: string;
+};
+
+// Lightweight PDF.js loader (same CDN pattern used elsewhere in project)
+async function extractPdfText(file: File): Promise<string> {
+  // @ts-ignore
+  if (!window.pdfjsLib) {
+    await new Promise<void>((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload = () => resolve();
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    // @ts-ignore
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+  const buf = await file.arrayBuffer();
+  // @ts-ignore
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  const maxPages = Math.min(pdf.numPages, 40);
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((it: { str: string }) => it.str).join(" ") + "\n\n";
+    if (text.length > 40_000) break;
+  }
+  return text.slice(0, 40_000);
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
 
 export const Route = createFileRoute("/chat/$threadId")({
   head: ({ params }) => ({ meta: [{ title: `Chat — ExamPass AI` }] }),
