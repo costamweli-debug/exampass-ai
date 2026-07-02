@@ -39,9 +39,14 @@ export const Route = createFileRoute("/api/chat")({
           if (userErr || !userData.user) return new Response("Unauthorized", { status: 401 });
           const userId = userData.user.id;
 
-          const body = (await request.json()) as { messages?: UIMessage[]; threadId?: string };
+          const body = (await request.json()) as {
+            messages?: UIMessage[];
+            threadId?: string;
+            attachmentIds?: string[];
+          };
           const messages = body.messages;
           const threadId = body.threadId;
+          const attachmentIds = Array.isArray(body.attachmentIds) ? body.attachmentIds.slice(0, 10) : [];
           if (!Array.isArray(messages) || !threadId) {
             return new Response("Bad request", { status: 400 });
           }
@@ -55,7 +60,30 @@ export const Route = createFileRoute("/api/chat")({
             .maybeSingle();
           if (!thread) return new Response("Thread not found", { status: 404 });
 
-          // Persist the latest user message
+          // Load attachment context (extracted text) for this turn, scoped to user + thread
+          let attachmentContext = "";
+          let attachmentChips = "";
+          if (attachmentIds.length > 0) {
+            const { data: atts } = await supabase
+              .from("chat_attachments")
+              .select("id, name, kind, extracted_text")
+              .eq("thread_id", threadId)
+              .eq("user_id", userId)
+              .in("id", attachmentIds);
+            if (atts && atts.length > 0) {
+              attachmentChips = atts
+                .map((a) => `📎 ${a.kind === "pdf" ? "PDF" : "Image"}: ${a.name}`)
+                .join("\n");
+              attachmentContext = atts
+                .map(
+                  (a) =>
+                    `--- ATTACHMENT: ${a.name} (${a.kind}) ---\n${(a.extracted_text ?? "").slice(0, 20000)}\n--- END ATTACHMENT ---`,
+                )
+                .join("\n\n");
+            }
+          }
+
+          // Persist the latest user message (with chips prefix so it renders in history)
           const last = messages[messages.length - 1];
           if (last && last.role === "user") {
             const text = last.parts
