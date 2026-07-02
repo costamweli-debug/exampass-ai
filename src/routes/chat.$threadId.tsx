@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon, Paperclip, FileText, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createThread,
@@ -23,7 +23,60 @@ import {
   deleteTag,
   setThreadTag,
 } from "@/lib/chat.functions";
+import { createAttachment, extractImageText } from "@/lib/attachments.functions";
 import { toast } from "sonner";
+
+const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
+
+type PendingAttachment = {
+  tempId: string;
+  id?: string; // set once saved server-side
+  kind: "pdf" | "image";
+  name: string;
+  mime: string;
+  size: number;
+  status: "extracting" | "ready" | "error";
+  error?: string;
+};
+
+// Lightweight PDF.js loader (same CDN pattern used elsewhere in project)
+async function extractPdfText(file: File): Promise<string> {
+  // @ts-ignore
+  if (!window.pdfjsLib) {
+    await new Promise<void>((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload = () => resolve();
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    // @ts-ignore
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+  const buf = await file.arrayBuffer();
+  // @ts-ignore
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  const maxPages = Math.min(pdf.numPages, 40);
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((it: { str: string }) => it.str).join(" ") + "\n\n";
+    if (text.length > 40_000) break;
+  }
+  return text.slice(0, 40_000);
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
 
 export const Route = createFileRoute("/chat/$threadId")({
   head: ({ params }) => ({ meta: [{ title: `Chat — ExamPass AI` }] }),
@@ -78,6 +131,10 @@ function ChatPage() {
     [messagesQ.data],
   );
 
+  // Attachment ids queued for the next send — kept in a ref so the transport
+  // fetch (which closes over stable state) always reads the freshest value.
+  const pendingIdsRef = useRef<string[]>([]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -87,12 +144,14 @@ function ChatPage() {
           const token = data.session?.access_token;
           const headers = new Headers(init?.headers);
           if (token) headers.set("Authorization", `Bearer ${token}`);
-          // include threadId in body
           let body = init?.body;
           if (typeof body === "string") {
             try {
               const parsed = JSON.parse(body);
               parsed.threadId = threadId;
+              if (pendingIdsRef.current.length > 0) {
+                parsed.attachmentIds = pendingIdsRef.current;
+              }
               body = JSON.stringify(parsed);
             } catch {
               // leave as-is
@@ -127,9 +186,15 @@ function ChatPage() {
 
   // Composer
   const [input, setInput] = useState("");
+  const [pending, setPending] = useState<PendingAttachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
+  const uploading = pending.some((p) => p.status === "extracting");
+
+  const createAttachmentFn = useServerFn(createAttachment);
+  const extractImageFn = useServerFn(extractImageText);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -139,12 +204,96 @@ function ChatPage() {
     inputRef.current?.focus();
   }, [threadId]);
 
+  // Reset pending when switching threads
+  useEffect(() => {
+    setPending([]);
+    pendingIdsRef.current = [];
+  }, [threadId]);
+
+  const handleFilesPicked = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const list = Array.from(files).slice(0, 5);
+    for (const file of list) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is too large (max 15 MB).`);
+        continue;
+      }
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const isImage = file.type.startsWith("image/");
+      if (!isPdf && !isImage) {
+        toast.error(`${file.name}: only PDFs and images are supported.`);
+        continue;
+      }
+      const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const kind: "pdf" | "image" = isPdf ? "pdf" : "image";
+      setPending((prev) => [
+        ...prev,
+        { tempId, kind, name: file.name, mime: file.type || (isPdf ? "application/pdf" : "image/*"), size: file.size, status: "extracting" },
+      ]);
+      (async () => {
+        try {
+          let extractedText = "";
+          if (isPdf) {
+            extractedText = await extractPdfText(file);
+          } else {
+            const dataUrl = await fileToDataUrl(file);
+            const res = await extractImageFn({ data: { dataUrl, name: file.name } });
+            extractedText = res.text;
+          }
+          const { attachment } = await createAttachmentFn({
+            data: {
+              threadId,
+              kind,
+              name: file.name,
+              mime: file.type || (isPdf ? "application/pdf" : "image/png"),
+              size: file.size,
+              extractedText,
+            },
+          });
+          pendingIdsRef.current = [...pendingIdsRef.current, attachment.id];
+          setPending((prev) =>
+            prev.map((p) => (p.tempId === tempId ? { ...p, id: attachment.id, status: "ready" } : p)),
+          );
+        } catch (err) {
+          console.error(err);
+          const msg = err instanceof Error ? err.message : "Upload failed";
+          setPending((prev) =>
+            prev.map((p) => (p.tempId === tempId ? { ...p, status: "error", error: msg } : p)),
+          );
+          toast.error(`${file.name}: ${msg}`);
+        }
+      })();
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePending = (tempId: string) => {
+    setPending((prev) => {
+      const target = prev.find((p) => p.tempId === tempId);
+      if (target?.id) {
+        pendingIdsRef.current = pendingIdsRef.current.filter((id) => id !== target.id);
+      }
+      return prev.filter((p) => p.tempId !== tempId);
+    });
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || busy) return;
+    const readyIds = pending.filter((p) => p.status === "ready" && p.id).map((p) => p.id as string);
+    if (busy || uploading) return;
+    if (!text && readyIds.length === 0) return;
+    // The transport reads from pendingIdsRef; make sure it reflects only ready ids.
+    pendingIdsRef.current = readyIds;
+    const messageText = text || (readyIds.length > 0 ? "Please review the attached file(s)." : "");
     setInput("");
-    await sendMessage({ text });
+    setPending([]);
+    try {
+      await sendMessage({ text: messageText });
+    } finally {
+      pendingIdsRef.current = [];
+    }
   };
+
 
   // New chat
   const handleNew = async () => {
@@ -798,6 +947,37 @@ function ChatPage() {
 
         <div className="border-t" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-background)" }}>
           <div className="mx-auto w-full max-w-3xl p-3">
+            {pending.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {pending.map((p) => (
+                  <div
+                    key={p.tempId}
+                    className="flex items-center gap-2 rounded-lg border px-2 py-1 text-xs"
+                    style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
+                  >
+                    {p.kind === "pdf" ? (
+                      <FileText className="h-3.5 w-3.5" style={{ color: "var(--color-primary)" }} />
+                    ) : (
+                      <ImageIcon className="h-3.5 w-3.5" style={{ color: "var(--color-primary)" }} />
+                    )}
+                    <span className="max-w-[180px] truncate" style={{ color: "var(--color-foreground)" }}>
+                      {p.name}
+                    </span>
+                    {p.status === "extracting" && <Loader2 className="h-3 w-3 animate-spin" />}
+                    {p.status === "error" && (
+                      <span className="text-red-500" title={p.error}>failed</span>
+                    )}
+                    <button
+                      onClick={() => removePending(p.tempId)}
+                      className="opacity-60 hover:opacity-100"
+                      aria-label="Remove attachment"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className="flex items-end gap-2 rounded-2xl border p-2 shadow-sm transition-colors focus-within:ring-2"
               style={{
@@ -805,6 +985,24 @@ function ChatPage() {
                 backgroundColor: "var(--color-card)",
               }}
             >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFilesPicked(e.target.files)}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/10"
+                style={{ color: "var(--color-muted-foreground)" }}
+                aria-label="Attach file"
+                title="Attach PDF or image (max 15 MB)"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -815,7 +1013,7 @@ function ChatPage() {
                     handleSend();
                   }
                 }}
-                placeholder="Ask anything…"
+                placeholder={uploading ? "Processing attachment…" : "Ask anything, or attach a PDF / image…"}
                 rows={1}
                 className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
                 style={{ color: "var(--color-foreground)" }}
@@ -823,7 +1021,7 @@ function ChatPage() {
               />
               <button
                 onClick={handleSend}
-                disabled={busy || !input.trim()}
+                disabled={busy || uploading || (!input.trim() && !pending.some((p) => p.status === "ready"))}
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
                 aria-label="Send"
@@ -831,6 +1029,7 @@ function ChatPage() {
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
+
             <p className="mt-2 text-center text-[10px]" style={{ color: "var(--color-muted-foreground)" }}>
               ExamPass AI may make mistakes. Verify important information.
             </p>

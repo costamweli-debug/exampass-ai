@@ -39,9 +39,14 @@ export const Route = createFileRoute("/api/chat")({
           if (userErr || !userData.user) return new Response("Unauthorized", { status: 401 });
           const userId = userData.user.id;
 
-          const body = (await request.json()) as { messages?: UIMessage[]; threadId?: string };
+          const body = (await request.json()) as {
+            messages?: UIMessage[];
+            threadId?: string;
+            attachmentIds?: string[];
+          };
           const messages = body.messages;
           const threadId = body.threadId;
+          const attachmentIds = Array.isArray(body.attachmentIds) ? body.attachmentIds.slice(0, 10) : [];
           if (!Array.isArray(messages) || !threadId) {
             return new Response("Bad request", { status: 400 });
           }
@@ -55,7 +60,30 @@ export const Route = createFileRoute("/api/chat")({
             .maybeSingle();
           if (!thread) return new Response("Thread not found", { status: 404 });
 
-          // Persist the latest user message
+          // Load attachment context (extracted text) for this turn, scoped to user + thread
+          let attachmentContext = "";
+          let attachmentChips = "";
+          if (attachmentIds.length > 0) {
+            const { data: atts } = await supabase
+              .from("chat_attachments")
+              .select("id, name, kind, extracted_text")
+              .eq("thread_id", threadId)
+              .eq("user_id", userId)
+              .in("id", attachmentIds);
+            if (atts && atts.length > 0) {
+              attachmentChips = atts
+                .map((a) => `📎 ${a.kind === "pdf" ? "PDF" : "Image"}: ${a.name}`)
+                .join("\n");
+              attachmentContext = atts
+                .map(
+                  (a) =>
+                    `--- ATTACHMENT: ${a.name} (${a.kind}) ---\n${(a.extracted_text ?? "").slice(0, 20000)}\n--- END ATTACHMENT ---`,
+                )
+                .join("\n\n");
+            }
+          }
+
+          // Persist the latest user message (with chips prefix so it renders in history)
           const last = messages[messages.length - 1];
           if (last && last.role === "user") {
             const text = last.parts
@@ -63,16 +91,17 @@ export const Route = createFileRoute("/api/chat")({
               .join("")
               .trim();
             if (text) {
+              const displayContent = attachmentChips ? `${attachmentChips}\n\n${text}` : text;
               await supabase.from("chat_messages").insert({
                 thread_id: threadId,
                 user_id: userId,
                 role: "user",
-                content: text,
+                content: displayContent,
               });
 
               // Auto-title if still "New chat"
               if (thread.title === "New chat") {
-                const title = text.slice(0, 60).replace(/\s+/g, " ").trim();
+                const title = (text || attachmentChips).slice(0, 60).replace(/\s+/g, " ").trim();
                 await supabase
                   .from("chat_threads")
                   .update({ title: title || "New chat" })
@@ -91,9 +120,13 @@ export const Route = createFileRoute("/api/chat")({
           const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
           const model = gateway("google/gemini-3-flash-preview");
 
+          const systemPrompt = attachmentContext
+            ? `${GENERAL_SYSTEM}\n\nThe user has attached the following file(s). Use them as authoritative context for this turn. When they ask to summarize, explain, or generate a quiz, base your answer on the attachment content.\n\n${attachmentContext}`
+            : GENERAL_SYSTEM;
+
           const result = streamText({
             model,
-            system: GENERAL_SYSTEM,
+            system: systemPrompt,
             messages: await convertToModelMessages(messages),
             onFinish: async ({ text }) => {
               if (text?.trim()) {
