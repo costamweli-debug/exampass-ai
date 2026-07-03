@@ -188,6 +188,7 @@ export type Database = {
           archived: boolean
           created_at: string
           id: string
+          pinned: boolean
           project_id: string | null
           title: string
           updated_at: string
@@ -197,6 +198,7 @@ export type Database = {
           archived?: boolean
           created_at?: string
           id?: string
+          pinned?: boolean
           project_id?: string | null
           title?: string
           updated_at?: string
@@ -206,6 +208,7 @@ export type Database = {
           archived?: boolean
           created_at?: string
           id?: string
+          pinned?: boolean
           project_id?: string | null
           title?: string
           updated_at?: string
