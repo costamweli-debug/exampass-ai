@@ -448,9 +448,15 @@ function ChatPage() {
   const [movingThreadId, setMovingThreadId] = useState<string | null>(null);
   const [renamingProject, setRenamingProject] = useState<{ id: string; name: string } | null>(null);
 
+  const pinnedThreads = useMemo(
+    () => visibleThreads.filter((t) => (t as { pinned?: boolean }).pinned),
+    [visibleThreads],
+  );
+
   const threadsByProject = useMemo(() => {
     const map = new Map<string | null, typeof visibleThreads>();
     for (const t of visibleThreads) {
+      if ((t as { pinned?: boolean }).pinned) continue; // shown in Pinned section
       const key = (t as { project_id: string | null }).project_id ?? null;
       const arr = map.get(key) ?? [];
       arr.push(t);
