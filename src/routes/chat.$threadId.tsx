@@ -4,7 +4,9 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon, Paperclip, FileText, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon, Paperclip, FileText, Image as ImageIcon, Pin, PinOff, Wand2, BookOpen, HelpCircle, Zap } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createThread,
@@ -22,6 +24,7 @@ import {
   createTag,
   deleteTag,
   setThreadTag,
+  togglePinThread,
 } from "@/lib/chat.functions";
 import { createAttachment, extractImageText } from "@/lib/attachments.functions";
 import { toast } from "sonner";
@@ -117,6 +120,7 @@ function ChatPage() {
   const createTagFn = useServerFn(createTag);
   const deleteTagFn = useServerFn(deleteTag);
   const setThreadTagFn = useServerFn(setThreadTag);
+  const togglePinFn = useServerFn(togglePinThread);
 
   const threadsQ = useQuery({ queryKey: ["chat-threads"], queryFn: () => listFn() });
   const projectsQ = useQuery({ queryKey: ["chat-projects"], queryFn: () => listProjectsFn() });
@@ -417,6 +421,25 @@ function ChatPage() {
     }
   };
 
+  const handleTogglePin = async (id: string, currentlyPinned: boolean) => {
+    try {
+      await togglePinFn({ data: { id, pinned: !currentlyPinned } });
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    } catch {
+      toast.error("Couldn't update pin.");
+    }
+  };
+
+  const handleQuickAction = async (prompt: string) => {
+    if (busy || uploading) return;
+    try {
+      await sendMessage({ text: prompt });
+    } catch {
+      toast.error("Couldn't send. Try again.");
+    }
+  };
+
+
   // Projects
   const projects = projectsQ.data?.projects ?? [];
   const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
@@ -425,9 +448,15 @@ function ChatPage() {
   const [movingThreadId, setMovingThreadId] = useState<string | null>(null);
   const [renamingProject, setRenamingProject] = useState<{ id: string; name: string } | null>(null);
 
+  const pinnedThreads = useMemo(
+    () => visibleThreads.filter((t) => (t as { pinned?: boolean }).pinned),
+    [visibleThreads],
+  );
+
   const threadsByProject = useMemo(() => {
     const map = new Map<string | null, typeof visibleThreads>();
     for (const t of visibleThreads) {
+      if ((t as { pinned?: boolean }).pinned) continue; // shown in Pinned section
       const key = (t as { project_id: string | null }).project_id ?? null;
       const arr = map.get(key) ?? [];
       arr.push(t);
@@ -482,11 +511,12 @@ function ChatPage() {
   };
 
 
-  const renderThreadRow = (t: { id: string; title: string; project_id?: string | null }) => {
+  const renderThreadRow = (t: { id: string; title: string; project_id?: string | null; pinned?: boolean }) => {
     const active = t.id === threadId;
     const isMoving = movingThreadId === t.id;
     const isTagging = tagMenuFor === t.id;
     const rowTags = tagsByThread.get(t.id) ?? [];
+    const pinned = !!t.pinned;
     return (
       <li key={t.id}>
         {renaming?.id === t.id ? (
@@ -517,9 +547,22 @@ function ChatPage() {
                 className="flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-sm transition-colors hover:opacity-90"
                 style={{ color: "var(--color-foreground)" }}
               >
-                <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                {pinned ? (
+                  <Pin className="h-3.5 w-3.5 flex-shrink-0 rotate-45" style={{ color: "var(--color-mint)", fill: "var(--color-mint)" }} />
+                ) : (
+                  <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                )}
                 <span className="truncate">{t.title}</span>
               </Link>
+              <button
+                onClick={() => handleTogglePin(t.id, pinned)}
+                className={`h-6 w-6 items-center justify-center rounded transition-opacity md:flex ${pinned ? "flex opacity-100" : "hidden opacity-0 group-hover:opacity-100"}`}
+                style={{ color: pinned ? "var(--color-mint)" : "var(--color-muted-foreground)" }}
+                aria-label={pinned ? "Unpin" : "Pin"}
+                title={pinned ? "Unpin chat" : "Pin chat"}
+              >
+                {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+              </button>
               <button
                 onClick={() => { setTagMenuFor(isTagging ? null : t.id); setMovingThreadId(null); }}
                 className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
@@ -723,6 +766,20 @@ function ChatPage() {
               </div>
             ) : (
               <div className="space-y-3">
+                {/* Pinned chats */}
+                {pinnedThreads.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1 px-2 pt-1">
+                      <Pin className="h-3 w-3 rotate-45" style={{ color: "var(--color-mint)", fill: "var(--color-mint)" }} />
+                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-muted-foreground)" }}>
+                        Pinned
+                      </span>
+                    </div>
+                    <ul className="mt-1 space-y-0.5">
+                      {pinnedThreads.map((t) => renderThreadRow(t))}
+                    </ul>
+                  </div>
+                )}
                 {/* Tags filter */}
                 <div>
                   <div className="flex items-center justify-between px-2 pt-1">
@@ -932,9 +989,23 @@ function ChatPage() {
               <EmptyState onPick={(t) => setInput(t)} />
             ) : (
               <div className="space-y-6">
-                {messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
-                ))}
+                {messages.map((m, idx) => {
+                  const isLast = idx === messages.length - 1;
+                  const isStreaming = isLast && m.role === "assistant" && status === "streaming";
+                  const showActions =
+                    m.role === "assistant" &&
+                    !isStreaming &&
+                    status !== "submitted" &&
+                    m.parts.some((p) => p.type === "text" && p.text.trim().length > 0);
+                  return (
+                    <div key={m.id}>
+                      <MessageBubble message={m} streaming={isStreaming} />
+                      {showActions && (
+                        <QuickActions busy={busy || uploading} onPick={handleQuickAction} />
+                      )}
+                    </div>
+                  );
+                })}
                 {status === "submitted" && (
                   <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-muted-foreground)" }}>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
@@ -1040,7 +1111,7 @@ function ChatPage() {
   );
 }
 
-function MessageBubble({ message }: { message: UIMessage }) {
+function MessageBubble({ message, streaming = false }: { message: UIMessage; streaming?: boolean }) {
   const isUser = message.role === "user";
   const text = message.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
   return (
@@ -1054,15 +1125,54 @@ function MessageBubble({ message }: { message: UIMessage }) {
         </div>
       )}
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "" : ""}`}
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? "whitespace-pre-wrap" : ""}`}
         style={
           isUser
             ? { backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }
             : { backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }
         }
       >
-        {text || <span className="opacity-50">…</span>}
+        {isUser ? (
+          text || <span className="opacity-50">…</span>
+        ) : text ? (
+          <div className="chat-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            {streaming && <span className="typing-caret" aria-hidden="true" />}
+          </div>
+        ) : (
+          <span className="opacity-50">…</span>
+        )}
       </div>
+    </div>
+  );
+}
+
+function QuickActions({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
+  const actions: Array<{ label: string; prompt: string; icon: typeof Wand2 }> = [
+    { label: "Make Quiz", icon: HelpCircle, prompt: "Turn what you just explained into a 5-question multiple-choice quiz (A–D options, then **Answer:** X with a one-line reason). Match my level." },
+    { label: "Summarize", icon: BookOpen, prompt: "Summarize your previous answer in under 5 crisp bullet points I can memorize before an exam." },
+    { label: "Explain Simpler", icon: Wand2, prompt: "Re-explain your previous answer in the simplest possible way, as if I'm hearing this topic for the first time. Use short sentences and one everyday analogy." },
+    { label: "Harder Question", icon: Zap, prompt: "Give me a harder exam-style question on the same topic, then wait for my answer before revealing the solution." },
+  ];
+  return (
+    <div className="mt-2 ml-11 flex flex-wrap gap-1.5">
+      {actions.map((a) => (
+        <button
+          key={a.label}
+          onClick={() => onPick(a.prompt)}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{
+            borderColor: "var(--color-border)",
+            backgroundColor: "var(--color-card)",
+            color: "var(--color-foreground)",
+          }}
+          title={a.label}
+        >
+          <a.icon className="h-3 w-3" style={{ color: "var(--color-mint)" }} />
+          {a.label}
+        </button>
+      ))}
     </div>
   );
 }
