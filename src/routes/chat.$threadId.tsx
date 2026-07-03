@@ -120,6 +120,7 @@ function ChatPage() {
   const createTagFn = useServerFn(createTag);
   const deleteTagFn = useServerFn(deleteTag);
   const setThreadTagFn = useServerFn(setThreadTag);
+  const togglePinFn = useServerFn(togglePinThread);
 
   const threadsQ = useQuery({ queryKey: ["chat-threads"], queryFn: () => listFn() });
   const projectsQ = useQuery({ queryKey: ["chat-projects"], queryFn: () => listProjectsFn() });
