@@ -166,12 +166,13 @@ export const Route = createFileRoute("/api/chat")({
                 content: displayContent,
               });
 
-              // Auto-title if still "New chat"
-              if (thread.title === "New chat") {
-                const title = (text || attachmentChips).slice(0, 60).replace(/\s+/g, " ").trim();
+              // Fallback title (used while AI generates the smart one)
+              const isFirstTurn = thread.title === "New chat";
+              if (isFirstTurn) {
+                const fallback = (text || attachmentChips).slice(0, 60).replace(/\s+/g, " ").trim();
                 await supabase
                   .from("chat_threads")
-                  .update({ title: title || "New chat" })
+                  .update({ title: fallback || "New chat" })
                   .eq("id", threadId)
                   .eq("user_id", userId);
               } else {
@@ -181,6 +182,9 @@ export const Route = createFileRoute("/api/chat")({
                   .eq("id", threadId)
                   .eq("user_id", userId);
               }
+              // Stash the flag for onFinish via closure
+              (thread as { _firstTurn?: boolean; _userText?: string })._firstTurn = isFirstTurn;
+              (thread as { _firstTurn?: boolean; _userText?: string })._userText = text;
             }
           }
 
@@ -208,6 +212,19 @@ export const Route = createFileRoute("/api/chat")({
                   .update({ updated_at: new Date().toISOString() })
                   .eq("id", threadId)
                   .eq("user_id", userId);
+
+                // Smart AI title on the first exchange
+                const meta = thread as { _firstTurn?: boolean; _userText?: string };
+                if (meta._firstTurn && meta._userText) {
+                  const smart = await generateSmartTitle(LOVABLE_API_KEY, meta._userText, text);
+                  if (smart) {
+                    await supabase
+                      .from("chat_threads")
+                      .update({ title: smart })
+                      .eq("id", threadId)
+                      .eq("user_id", userId);
+                  }
+                }
               }
             },
           });
