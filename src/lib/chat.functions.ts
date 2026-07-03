@@ -8,13 +8,30 @@ export const listThreads = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("chat_threads")
-      .select("id, title, updated_at, created_at, project_id")
+      .select("id, title, updated_at, created_at, project_id, pinned")
       .eq("user_id", userId)
       .eq("archived", false)
+      .order("pinned", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(500);
     if (error) throw new Error(error.message);
     return { threads: data ?? [] };
+  });
+
+export const togglePinThread = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), pinned: z.boolean() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("chat_threads")
+      .update({ pinned: data.pinned })
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const listProjects = createServerFn({ method: "GET" })
