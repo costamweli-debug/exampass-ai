@@ -505,11 +505,12 @@ function ChatPage() {
   };
 
 
-  const renderThreadRow = (t: { id: string; title: string; project_id?: string | null }) => {
+  const renderThreadRow = (t: { id: string; title: string; project_id?: string | null; pinned?: boolean }) => {
     const active = t.id === threadId;
     const isMoving = movingThreadId === t.id;
     const isTagging = tagMenuFor === t.id;
     const rowTags = tagsByThread.get(t.id) ?? [];
+    const pinned = !!t.pinned;
     return (
       <li key={t.id}>
         {renaming?.id === t.id ? (
@@ -540,9 +541,22 @@ function ChatPage() {
                 className="flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-sm transition-colors hover:opacity-90"
                 style={{ color: "var(--color-foreground)" }}
               >
-                <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                {pinned ? (
+                  <Pin className="h-3.5 w-3.5 flex-shrink-0 rotate-45" style={{ color: "var(--color-mint)", fill: "var(--color-mint)" }} />
+                ) : (
+                  <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" style={{ color: active ? "var(--color-mint)" : "var(--color-muted-foreground)" }} />
+                )}
                 <span className="truncate">{t.title}</span>
               </Link>
+              <button
+                onClick={() => handleTogglePin(t.id, pinned)}
+                className={`h-6 w-6 items-center justify-center rounded transition-opacity md:flex ${pinned ? "flex opacity-100" : "hidden opacity-0 group-hover:opacity-100"}`}
+                style={{ color: pinned ? "var(--color-mint)" : "var(--color-muted-foreground)" }}
+                aria-label={pinned ? "Unpin" : "Pin"}
+                title={pinned ? "Unpin chat" : "Pin chat"}
+              >
+                {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+              </button>
               <button
                 onClick={() => { setTagMenuFor(isTagging ? null : t.id); setMovingThreadId(null); }}
                 className="hidden h-6 w-6 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 md:flex"
