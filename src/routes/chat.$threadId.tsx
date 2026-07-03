@@ -766,6 +766,20 @@ function ChatPage() {
               </div>
             ) : (
               <div className="space-y-3">
+                {/* Pinned chats */}
+                {pinnedThreads.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1 px-2 pt-1">
+                      <Pin className="h-3 w-3 rotate-45" style={{ color: "var(--color-mint)", fill: "var(--color-mint)" }} />
+                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-muted-foreground)" }}>
+                        Pinned
+                      </span>
+                    </div>
+                    <ul className="mt-1 space-y-0.5">
+                      {pinnedThreads.map((t) => renderThreadRow(t))}
+                    </ul>
+                  </div>
+                )}
                 {/* Tags filter */}
                 <div>
                   <div className="flex items-center justify-between px-2 pt-1">
