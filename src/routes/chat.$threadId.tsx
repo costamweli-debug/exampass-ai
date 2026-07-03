@@ -1111,7 +1111,7 @@ function ChatPage() {
   );
 }
 
-function MessageBubble({ message }: { message: UIMessage }) {
+function MessageBubble({ message, streaming = false }: { message: UIMessage; streaming?: boolean }) {
   const isUser = message.role === "user";
   const text = message.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
   return (
@@ -1125,15 +1125,54 @@ function MessageBubble({ message }: { message: UIMessage }) {
         </div>
       )}
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "" : ""}`}
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? "whitespace-pre-wrap" : ""}`}
         style={
           isUser
             ? { backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }
             : { backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)" }
         }
       >
-        {text || <span className="opacity-50">…</span>}
+        {isUser ? (
+          text || <span className="opacity-50">…</span>
+        ) : text ? (
+          <div className="chat-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            {streaming && <span className="typing-caret" aria-hidden="true" />}
+          </div>
+        ) : (
+          <span className="opacity-50">…</span>
+        )}
       </div>
+    </div>
+  );
+}
+
+function QuickActions({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
+  const actions: Array<{ label: string; prompt: string; icon: typeof Wand2 }> = [
+    { label: "Make Quiz", icon: HelpCircle, prompt: "Turn what you just explained into a 5-question multiple-choice quiz (A–D options, then **Answer:** X with a one-line reason). Match my level." },
+    { label: "Summarize", icon: BookOpen, prompt: "Summarize your previous answer in under 5 crisp bullet points I can memorize before an exam." },
+    { label: "Explain Simpler", icon: Wand2, prompt: "Re-explain your previous answer in the simplest possible way, as if I'm hearing this topic for the first time. Use short sentences and one everyday analogy." },
+    { label: "Harder Question", icon: Zap, prompt: "Give me a harder exam-style question on the same topic, then wait for my answer before revealing the solution." },
+  ];
+  return (
+    <div className="mt-2 ml-11 flex flex-wrap gap-1.5">
+      {actions.map((a) => (
+        <button
+          key={a.label}
+          onClick={() => onPick(a.prompt)}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{
+            borderColor: "var(--color-border)",
+            backgroundColor: "var(--color-card)",
+            color: "var(--color-foreground)",
+          }}
+          title={a.label}
+        >
+          <a.icon className="h-3 w-3" style={{ color: "var(--color-mint)" }} />
+          {a.label}
+        </button>
+      ))}
     </div>
   );
 }
