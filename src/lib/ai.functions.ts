@@ -123,12 +123,14 @@ Correct answer: "${data.correctAnswer}"
 
 ${lg.explain}
 
-Respond in exactly this structure, no headings, no fluff:
-1. Direct answer (one sentence: state why it is correct).
-2. Breakdown (2–4 short lines, plain reasoning).
-3. Strategic insight (one line: a shortcut, common trap, or pattern to remember).
+Respond in markdown using this exact structure:
 
-Tone: calm, intelligent, slightly cold, straight to the point. Do not praise the student. Do not exceed 180 words.`;
+**Answer** — one line: why the correct answer is correct.
+**Explanation** — 2–4 numbered steps of reasoning.
+**Key points** — 2–3 bullets to memorize.
+**Exam tips** — one common mistake + one strategy or shortcut.
+
+Tone: clear, strategic, slightly strict. No praise, no emojis, no filler. Max 200 words.`;
 
     const explanation = await callAI([
       { role: "system", content: `You are ExamPass AI: a strict, brilliant mentor for ${lg.label} students. Sharp, precise, never warm.` },
