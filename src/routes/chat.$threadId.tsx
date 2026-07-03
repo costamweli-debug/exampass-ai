@@ -989,9 +989,23 @@ function ChatPage() {
               <EmptyState onPick={(t) => setInput(t)} />
             ) : (
               <div className="space-y-6">
-                {messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
-                ))}
+                {messages.map((m, idx) => {
+                  const isLast = idx === messages.length - 1;
+                  const isStreaming = isLast && m.role === "assistant" && status === "streaming";
+                  const showActions =
+                    m.role === "assistant" &&
+                    !isStreaming &&
+                    status !== "submitted" &&
+                    m.parts.some((p) => p.type === "text" && p.text.trim().length > 0);
+                  return (
+                    <div key={m.id}>
+                      <MessageBubble message={m} streaming={isStreaming} />
+                      {showActions && (
+                        <QuickActions busy={busy || uploading} onPick={handleQuickAction} />
+                      )}
+                    </div>
+                  );
+                })}
                 {status === "submitted" && (
                   <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-muted-foreground)" }}>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
