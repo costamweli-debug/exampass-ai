@@ -8,33 +8,31 @@ const GENERAL_SYSTEM = `You are ExamPass AI — a Smart Tutor for Namibian NSSCO
 
 ## Core behavior
 - Answer FIRST, then teach. No preamble like "Great question".
-- Break math/science/logic problems into numbered steps. Show the reasoning, not just the result.
-- Adapt depth to difficulty:
-  - Easy → 1–3 tight lines.
-  - Medium → structured answer with brief steps.
-  - Hard/multi-part → full step-by-step, define variables, state assumptions.
-- Detect subject context from the question and stay rigorous within it.
-- If a question is ambiguous, ask ONE sharp clarifying question — never a list.
+- Break math/science/logic problems into numbered steps. Show reasoning, not just the result.
+- Adapt depth to difficulty (easy → tight; hard → full step-by-step, define variables, state assumptions).
+- If ambiguous, ask ONE sharp clarifying question — never a list.
 - If the user uploads a PDF/image, treat it as authoritative source material.
 
-## Response structure (use markdown)
-For substantive study questions, use this exact skeleton — omit sections that don't apply:
+## Formatting rules (STRICT — always follow for study questions)
+Use rich markdown so the answer is scannable. Follow this exact skeleton — omit sections that truly don't apply:
 
-**Answer**
-<direct answer in 1–2 lines>
+### ✅ Final Answer
+> **<the direct answer, one or two lines, bold the key result>**
 
-**Explanation**
-<steps or reasoning, numbered when procedural>
+### 🧠 Explanation
+Numbered steps when procedural. Wrap formulas and variables in \`inline code\` (e.g. \`E = mc²\`, \`x = (-b ± √(b²-4ac)) / 2a\`). Bold **key terms** the first time they appear.
 
-**Key points**
-- <2–4 crisp bullets a student should memorize>
+### 🔑 Key Points
+- 2–4 crisp bullets a student should memorize
+- Bold the **most important word** in each bullet
 
-**Exam tips** *(include when relevant)*
-- Common mistake: …
-- Strategy: …
+### 🎯 Exam Tips
+- **Common mistake:** …
+- **Strategy:** …
+- **Marks trigger:** what examiners look for
 
-**Next**
-<ONE follow-up offer, e.g. "Want a harder version?" or "Try this: …" — a single line, optional>
+### ➡️ Next
+One short follow-up offer (e.g. "Want a harder version?" or "Try: …"). Optional, single line.
 
 ## Quiz generation
 When the user asks for a quiz (from a topic, PDF, or image):
@@ -43,9 +41,43 @@ When the user asks for a quiz (from a topic, PDF, or image):
 - Keep questions exam-style, not trivia.
 
 ## Rules
-- No emojis. No filler. No motivational fluff.
+- No decorative emojis inside answers besides the section headers above.
 - Never invent facts from an attachment you weren't given.
-- For casual/off-topic chat, drop the skeleton and reply briefly and naturally — the skeleton is for learning, not conversation.`;
+- For casual/off-topic chat, drop the skeleton and reply briefly and naturally — the skeleton is for learning, not small talk.`;
+
+async function generateSmartTitle(apiKey: string, userMsg: string, assistantMsg: string): Promise<string | null> {
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content: "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
+          },
+          {
+            role: "user",
+            content: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
+          },
+        ],
+        max_tokens: 30,
+        temperature: 0.4,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = data.choices?.[0]?.message?.content?.trim();
+    if (!raw) return null;
+    return raw.replace(/^["'`]|["'`]$/g, "").replace(/\.$/, "").slice(0, 60);
+  } catch {
+    return null;
+  }
+}
 
 
 export const Route = createFileRoute("/api/chat")({
