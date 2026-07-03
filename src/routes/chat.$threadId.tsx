@@ -421,6 +421,25 @@ function ChatPage() {
     }
   };
 
+  const handleTogglePin = async (id: string, currentlyPinned: boolean) => {
+    try {
+      await togglePinFn({ data: { id, pinned: !currentlyPinned } });
+      qc.invalidateQueries({ queryKey: ["chat-threads"] });
+    } catch {
+      toast.error("Couldn't update pin.");
+    }
+  };
+
+  const handleQuickAction = async (prompt: string) => {
+    if (busy || uploading) return;
+    try {
+      await sendMessage({ text: prompt });
+    } catch {
+      toast.error("Couldn't send. Try again.");
+    }
+  };
+
+
   // Projects
   const projects = projectsQ.data?.projects ?? [];
   const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
