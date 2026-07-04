@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { awardQuizXP } from "@/lib/stats.functions";
+
 
 export interface QuizQuestion {
   question: string;
