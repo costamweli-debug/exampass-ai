@@ -9,6 +9,8 @@ import { listSubjects, type CurriculumSubject } from "@/lib/curriculum.functions
 import { useServerFn } from "@tanstack/react-start";
 import { LevelToggle } from "@/components/LevelToggle";
 import { useLevel } from "@/hooks/use-level";
+import { StudyHub } from "@/components/StudyHub";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
