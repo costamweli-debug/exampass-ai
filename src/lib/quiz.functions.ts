@@ -86,8 +86,10 @@ export const saveQuizSession = createServerFn({ method: "POST" })
       });
     }
 
-    return { session };
+    const xp = await awardQuizXP(supabase, userId, { score: data.score, total: data.total });
+    return { session, xp };
   });
+
 
 export const getQuizSessions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
