@@ -92,6 +92,8 @@ function DashboardPage() {
             </div>
           </div>
         </div>
+        <StudyHub />
+
 
         {grouped.map(({ category, items }) => (
           <section key={category} className="mb-10">
