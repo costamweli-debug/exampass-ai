@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { awardQuizXP } from "@/lib/stats.functions";
+
 
 export interface QuizQuestion {
   question: string;
@@ -84,8 +86,10 @@ export const saveQuizSession = createServerFn({ method: "POST" })
       });
     }
 
-    return { session };
+    const xp = await awardQuizXP(supabase, userId, { score: data.score, total: data.total });
+    return { session, xp };
   });
+
 
 export const getQuizSessions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

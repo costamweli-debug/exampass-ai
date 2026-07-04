@@ -495,6 +495,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          created_at: string
+          daily_goal: number
+          last_study_date: string | null
+          level: number
+          longest_streak: number
+          questions_today: number
+          streak: number
+          today_date: string | null
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          daily_goal?: number
+          last_study_date?: string | null
+          level?: number
+          longest_streak?: number
+          questions_today?: number
+          streak?: number
+          today_date?: string | null
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          daily_goal?: number
+          last_study_date?: string | null
+          level?: number
+          longest_streak?: number
+          questions_today?: number
+          streak?: number
+          today_date?: string | null
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
