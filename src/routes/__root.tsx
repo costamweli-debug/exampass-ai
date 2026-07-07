@@ -140,8 +140,8 @@ function AppNav({ user }: { user: { email?: string } | null }) {
   return (
     <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: "var(--color-border)", backgroundColor: "color-mix(in oklab, var(--color-background) 80%, transparent)" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: logoSvg }} />
+        <Link to="/" className="flex items-center gap-2.5 leading-none">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center [&_svg]:h-full [&_svg]:w-full [&_svg]:block" dangerouslySetInnerHTML={{ __html: logoSvg }} />
           <span className="text-lg font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>ExamPass AI</span>
         </Link>
         <div className="flex items-center gap-3">
