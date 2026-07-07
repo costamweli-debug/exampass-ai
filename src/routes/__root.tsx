@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider } from "@/lib/theme";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "sonner";
+import logoAsset from "@/assets/exampass-logo.svg.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -140,8 +141,8 @@ function AppNav({ user }: { user: { email?: string } | null }) {
     <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: "var(--color-border)", backgroundColor: "color-mix(in oklab, var(--color-background) 80%, transparent)" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl">🎓</span>
-          <span className="text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>ExamPass AI</span>
+          <img src={logoAsset.url} alt="ExamPass AI logo" className="h-8 w-8 shrink-0 object-contain" />
+          <span className="text-lg font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>ExamPass AI</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
