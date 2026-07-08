@@ -296,17 +296,17 @@ function LandingPage() {
           <div className="absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full opacity-40 blur-3xl" style={{ backgroundColor: "var(--color-mint)" }} />
           <div className="relative">
             <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Your best grade starts today.
+              Your exam won't wait.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base sm:text-lg" style={{ color: "var(--color-muted-foreground)" }}>
-              Stop guessing what to study. Start practicing what actually shows up on the exam.
+              Every day you delay is a topic you won't master. Start tonight.
             </p>
             <Link
               to="/auth"
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold transition-all hover:scale-105"
               style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
             >
-              Start Practicing Now <ArrowRight className="h-4 w-4" />
+              Start Studying Free <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
