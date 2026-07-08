@@ -196,10 +196,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>Features</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Everything you need to pass.
+              Built to move your grade.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              Built for results. Not busywork.
+              Every feature earns its place. No filler.
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
