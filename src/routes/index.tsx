@@ -18,48 +18,48 @@ import heroImg from "@/assets/hero.png";
 import { SUBJECTS } from "@/lib/subjects";
 
 const VALUE_STRIP = [
-  { icon: Brain, label: "AI exam-style quizzes" },
-  { icon: Zap, label: "Instant explanations" },
-  { icon: TrendingUp, label: "Smart progress tracking" },
+  { icon: Brain, label: "Real exam-style questions" },
+  { icon: Zap, label: "Answers explained instantly" },
+  { icon: TrendingUp, label: "See your grade improve" },
 ];
 
 const FEATURES = [
   {
     icon: Brain,
-    title: "AI Quizzes Built to Pass Exams",
-    desc: "Exam-style questions matched to the NSSCO and AS Level syllabus. Practice the way you'll be tested.",
+    title: "Quizzes that mirror the real exam",
+    desc: "AI questions aligned to the NSSCO and AS Level syllabus. Practice exactly what you'll be tested on.",
   },
   {
     icon: MessageSquare,
-    title: "Focused Tutor Chat",
-    desc: "Ask questions on your subject and get straight answers. No distractions, no noise — just learning.",
+    title: "A tutor that never sleeps",
+    desc: "Ask anything about your subject. Get a clear answer in seconds — not next lesson.",
   },
   {
     icon: BarChart3,
-    title: "Track Real Improvement",
-    desc: "See exactly where you're strong, where you're weak, and how much you've improved each week.",
+    title: "Know exactly where you stand",
+    desc: "See your weak topics, your strong ones, and how much you've improved this week.",
   },
   {
     icon: Trophy,
-    title: "Rank Up as You Study",
-    desc: "Climb from Beginner to Elite. Every session earns XP so studying builds momentum you can feel.",
+    title: "Study that feels rewarding",
+    desc: "Climb from Beginner to Elite. Every quiz earns XP, so momentum builds itself.",
   },
   {
     icon: FileText,
-    title: "Turn Any PDF into a Quiz",
-    desc: "Upload notes or a past paper. Our AI reads it and generates a fresh quiz in seconds.",
+    title: "Turn any past paper into practice",
+    desc: "Upload a PDF. Get a fresh, exam-style quiz in seconds. Built for revision week.",
   },
   {
     icon: Zap,
-    title: "Clear, Instant Explanations",
-    desc: "Every answer comes with the reasoning. Understand the concept, not just the correct letter.",
+    title: "Understand it, don't memorise it",
+    desc: "Every answer comes with the reasoning. Learn the concept, not just the correct letter.",
   },
 ];
 
 const STEPS = [
-  { icon: Target, title: "Choose your subject", desc: "Pick from all NSSCO and AS Level subjects." },
-  { icon: Sparkles, title: "Practice with AI", desc: "Take quizzes, ask questions, upload notes." },
-  { icon: Trophy, title: "Improve and pass", desc: "Track progress and walk into your exam ready." },
+  { icon: Target, title: "Pick your subject", desc: "Every NSSCO and AS Level subject. One tap." },
+  { icon: Sparkles, title: "Practice with AI", desc: "Quiz, ask, upload notes. Learn fast." },
+  { icon: Trophy, title: "Walk in ready", desc: "Track progress. Beat the exam." },
 ];
 
 const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
@@ -102,15 +102,15 @@ function LandingPage() {
               className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}
             >
-              Pass NSSCO & AS Level.
+              Pass your exams.
               <br />
-              <span style={{ color: "var(--color-mint)" }}>With AI on your side.</span>
+              <span style={{ color: "var(--color-mint)" }}>Not just prepare for them.</span>
             </h1>
             <p
               className="mx-auto mt-6 max-w-lg text-lg leading-relaxed lg:mx-0"
               style={{ color: "var(--color-muted-foreground)" }}
             >
-              Practice real exam questions, get instant explanations, and see your grade improve week after week.
+              AI-powered practice for NSSCO and AS Level. Real questions. Instant answers. Grades that move.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
@@ -118,7 +118,7 @@ function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold transition-all hover:scale-105"
                 style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
               >
-                Start Practicing Now <ArrowRight className="h-4 w-4" />
+                Start Studying Free <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#subjects"
@@ -166,10 +166,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>Subjects</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              NSSCO & AS Level, covered.
+              Your whole syllabus. One app.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              {SUBJECTS.length} core subjects. {TOTAL_TOPICS}+ focused topics. All in one place.
+              {SUBJECTS.length} subjects. {TOTAL_TOPICS}+ topics. Tap one to start.
             </p>
           </div>
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -196,10 +196,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>Features</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Everything you need to pass.
+              Built to move your grade.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              Built for results. Not busywork.
+              Every feature earns its place. No filler.
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -230,10 +230,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>How it works</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Three steps to a better grade.
+              Start in under a minute.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              No setup. No overwhelm. Just study.
+              No setup. No signup wall. Just study.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -270,14 +270,14 @@ function LandingPage() {
               <Upload className="h-6 w-6" style={{ color: "var(--color-mint)" }} />
             </div>
             <h3 className="mt-4 text-2xl font-bold sm:text-3xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Drop a past paper. Get a quiz.
+              Turn any past paper into a quiz.
             </h3>
             <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--color-muted-foreground)" }}>
-              Upload any PDF — notes, textbook, past exam. Our AI reads it and builds a fresh practice quiz in seconds.
+              Upload a PDF. Our AI reads it and builds an exam-style quiz in seconds.
             </p>
           </div>
           <ul className="space-y-3">
-            {["Instant AI summary of any PDF", "Fresh exam-style questions per upload", "Perfect for last-minute revision"].map((item) => (
+            {["AI summary of any PDF, instantly", "Fresh questions every upload", "Made for revision week"].map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm" style={{ color: "var(--color-foreground)" }}>
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" style={{ color: "var(--color-mint)" }} />
                 <span>{item}</span>
@@ -296,17 +296,17 @@ function LandingPage() {
           <div className="absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full opacity-40 blur-3xl" style={{ backgroundColor: "var(--color-mint)" }} />
           <div className="relative">
             <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Your best grade starts today.
+              Your exam won't wait.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base sm:text-lg" style={{ color: "var(--color-muted-foreground)" }}>
-              Stop guessing what to study. Start practicing what actually shows up on the exam.
+              Every day you delay is a topic you won't master. Start tonight.
             </p>
             <Link
               to="/auth"
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold transition-all hover:scale-105"
               style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
             >
-              Start Practicing Now <ArrowRight className="h-4 w-4" />
+              Start Studying Free <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
