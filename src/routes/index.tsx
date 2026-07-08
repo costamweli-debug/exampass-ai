@@ -270,14 +270,14 @@ function LandingPage() {
               <Upload className="h-6 w-6" style={{ color: "var(--color-mint)" }} />
             </div>
             <h3 className="mt-4 text-2xl font-bold sm:text-3xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Drop a past paper. Get a quiz.
+              Turn any past paper into a quiz.
             </h3>
             <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--color-muted-foreground)" }}>
-              Upload any PDF — notes, textbook, past exam. Our AI reads it and builds a fresh practice quiz in seconds.
+              Upload a PDF. Our AI reads it and builds an exam-style quiz in seconds.
             </p>
           </div>
           <ul className="space-y-3">
-            {["Instant AI summary of any PDF", "Fresh exam-style questions per upload", "Perfect for last-minute revision"].map((item) => (
+            {["AI summary of any PDF, instantly", "Fresh questions every upload", "Made for revision week"].map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm" style={{ color: "var(--color-foreground)" }}>
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" style={{ color: "var(--color-mint)" }} />
                 <span>{item}</span>
