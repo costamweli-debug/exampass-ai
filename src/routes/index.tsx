@@ -118,7 +118,7 @@ function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold transition-all hover:scale-105"
                 style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
               >
-                Start Practicing Now <ArrowRight className="h-4 w-4" />
+                Start Studying Free <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#subjects"
