@@ -102,15 +102,15 @@ function LandingPage() {
               className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}
             >
-              Pass NSSCO & AS Level.
+              Pass your exams.
               <br />
-              <span style={{ color: "var(--color-mint)" }}>With AI on your side.</span>
+              <span style={{ color: "var(--color-mint)" }}>Not just prepare for them.</span>
             </h1>
             <p
               className="mx-auto mt-6 max-w-lg text-lg leading-relaxed lg:mx-0"
               style={{ color: "var(--color-muted-foreground)" }}
             >
-              Practice real exam questions, get instant explanations, and see your grade improve week after week.
+              AI-powered practice for NSSCO and AS Level. Real questions. Instant answers. Grades that move.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
