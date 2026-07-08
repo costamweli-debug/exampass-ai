@@ -10,50 +10,56 @@ import {
   Target,
   ArrowRight,
   CheckCircle2,
-  Star,
   Upload,
   GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 import heroImg from "@/assets/hero.png";
 import { SUBJECTS } from "@/lib/subjects";
 
+const VALUE_STRIP = [
+  { icon: Brain, label: "AI exam-style quizzes" },
+  { icon: Zap, label: "Instant explanations" },
+  { icon: TrendingUp, label: "Smart progress tracking" },
+];
+
 const FEATURES = [
   {
     icon: Brain,
-    title: "AI Quizzes That Actually Teach",
-    desc: "Exam-style questions generated for your exact topic. No two quizzes are the same.",
+    title: "AI Quizzes Built to Pass Exams",
+    desc: "Exam-style questions matched to the NSSCO and AS Level syllabus. Practice the way you'll be tested.",
   },
   {
     icon: MessageSquare,
-    title: "Your Personal Tutor, 24/7",
-    desc: "Ask anything about your subject. Get answers that make the concept click.",
+    title: "Focused Tutor Chat",
+    desc: "Ask questions on your subject and get straight answers. No distractions, no noise — just learning.",
   },
   {
     icon: BarChart3,
-    title: "Know Exactly Where You Stand",
-    desc: "See your weak topics, track improvement, and study only what moves your grade.",
+    title: "Track Real Improvement",
+    desc: "See exactly where you're strong, where you're weak, and how much you've improved each week.",
   },
   {
     icon: Trophy,
-    title: "Climb from Beginner to Elite",
-    desc: "Earn XP, level up, and turn revision into a habit you actually enjoy.",
+    title: "Rank Up as You Study",
+    desc: "Climb from Beginner to Elite. Every session earns XP so studying builds momentum you can feel.",
   },
   {
     icon: FileText,
-    title: "Turn Past Papers Into Practice",
-    desc: "Upload any PDF. Get instant summaries and 10 fresh questions from it.",
+    title: "Turn Any PDF into a Quiz",
+    desc: "Upload notes or a past paper. Our AI reads it and generates a fresh quiz in seconds.",
   },
   {
     icon: Zap,
-    title: "Instant, Clear Explanations",
-    desc: "Every answer comes with the why — so you learn, not just memorize.",
+    title: "Clear, Instant Explanations",
+    desc: "Every answer comes with the reasoning. Understand the concept, not just the correct letter.",
   },
 ];
 
 const STEPS = [
-  { icon: Target, title: "Pick your subject", desc: "Choose from all NSSCO & AS Level subjects." },
+  { icon: Target, title: "Choose your subject", desc: "Pick from all NSSCO and AS Level subjects." },
   { icon: Sparkles, title: "Practice with AI", desc: "Take quizzes, ask questions, upload notes." },
-  { icon: Trophy, title: "Watch your grade rise", desc: "Track progress and level up daily." },
+  { icon: Trophy, title: "Improve and pass", desc: "Track progress and walk into your exam ready." },
 ];
 
 const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
@@ -65,12 +71,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "AI-powered exam prep for Namibian students. Generate quizzes, get instant explanations, and track progress for NSSCO & AS Level. Study smarter, pass with confidence.",
+          "AI-powered exam prep built for Namibian NSSCO and AS Level students. Practice with exam-style quizzes, get instant explanations, and track your progress.",
       },
       { property: "og:title", content: "ExamPass AI — Pass NSSCO & AS Level with AI" },
       {
         property: "og:description",
-        content: "Study smarter. Pass with confidence. AI-powered NSSCO & AS Level prep.",
+        content: "AI-powered exam prep built for Namibian NSSCO and AS Level students.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -90,21 +96,21 @@ function LandingPage() {
               className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium"
               style={{ backgroundColor: "oklch(0.72 0.18 165 / 0.15)", color: "var(--color-mint)" }}
             >
-              <Sparkles className="h-4 w-4" /> Built for NSSCO & AS Level
+              <GraduationCap className="h-4 w-4" /> Built for Namibian NSSCO & AS Level students
             </div>
             <h1
               className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}
             >
-              Pass Your Exams.
+              Pass NSSCO & AS Level.
               <br />
-              <span style={{ color: "var(--color-mint)" }}>Powered by AI.</span>
+              <span style={{ color: "var(--color-mint)" }}>With AI on your side.</span>
             </h1>
             <p
               className="mx-auto mt-6 max-w-lg text-lg leading-relaxed lg:mx-0"
               style={{ color: "var(--color-muted-foreground)" }}
             >
-              The smartest way for Namibian students to prep for NSSCO and AS Level. AI quizzes, instant explanations, real progress.
+              Practice real exam questions, get instant explanations, and see your grade improve week after week.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
@@ -114,18 +120,13 @@ function LandingPage() {
               >
                 Start Practicing Now <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                to="/auth"
+              <a
+                href="#subjects"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border px-8 py-3.5 text-base font-medium transition-colors"
                 style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)" }}
               >
-                See How It Works
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm lg:justify-start" style={{ color: "var(--color-muted-foreground)" }}>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> Free to start</span>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> No credit card</span>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> Works on mobile</span>
+                Browse Subjects
+              </a>
             </div>
           </div>
           <div className="relative flex-1">
@@ -145,41 +146,37 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Social proof strip */}
+      {/* Value Strip */}
       <section className="border-y px-4 py-8" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface)" }}>
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
-          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-muted-foreground)" }}>
-            <div className="flex">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Star key={i} className="h-4 w-4 fill-current" style={{ color: "var(--color-mint)" }} />
-              ))}
+        <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-3">
+          {VALUE_STRIP.map((v) => (
+            <div key={v.label} className="flex items-center justify-center gap-3 text-sm font-medium sm:text-base" style={{ color: "var(--color-foreground)" }}>
+              <span className="inline-flex rounded-lg p-2" style={{ backgroundColor: "oklch(0.72 0.18 165 / 0.12)" }}>
+                <v.icon className="h-5 w-5" style={{ color: "var(--color-mint)" }} />
+              </span>
+              {v.label}
             </div>
-            <span>Loved by students across Namibia</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium" style={{ color: "var(--color-muted-foreground)" }}>
-            <span className="inline-flex items-center gap-2"><GraduationCap className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> NSSCO Aligned</span>
-            <span className="inline-flex items-center gap-2"><GraduationCap className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> AS Level Ready</span>
-            <span className="inline-flex items-center gap-2"><Sparkles className="h-4 w-4" style={{ color: "var(--color-mint)" }} /> Powered by AI</span>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* Subjects */}
-      <section className="px-4 py-20">
+      <section id="subjects" className="px-4 py-20 scroll-mt-20">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>Subjects</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Every subject. Every topic.
+              NSSCO & AS Level, covered.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              {SUBJECTS.length} core subjects. {TOTAL_TOPICS}+ focused topics. One place to master them all.
+              {SUBJECTS.length} core subjects. {TOTAL_TOPICS}+ focused topics. All in one place.
             </p>
           </div>
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {SUBJECTS.map((subject) => (
-              <div
+              <Link
                 key={subject.id}
+                to="/auth"
                 className="flex flex-col items-center gap-3 rounded-2xl border p-6 transition-transform hover:scale-105"
                 style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}
               >
@@ -187,7 +184,7 @@ function LandingPage() {
                 <span className="text-center text-sm font-semibold" style={{ color: "var(--color-foreground)" }}>
                   {subject.name}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -202,7 +199,7 @@ function LandingPage() {
               Everything you need to pass.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              Built with one goal: better grades, less stress.
+              Built for results. Not busywork.
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -233,7 +230,7 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>How it works</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Start passing in 3 steps.
+              Three steps to a better grade.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
               No setup. No overwhelm. Just study.
@@ -276,11 +273,11 @@ function LandingPage() {
               Drop a past paper. Get a quiz.
             </h3>
             <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--color-muted-foreground)" }}>
-              Upload any PDF — notes, textbook chapter, past exam. Our AI reads it and builds a fresh practice quiz in seconds.
+              Upload any PDF — notes, textbook, past exam. Our AI reads it and builds a fresh practice quiz in seconds.
             </p>
           </div>
           <ul className="space-y-3">
-            {["Instant AI summary of any PDF", "10 exam-style questions per upload", "Perfect for last-minute revision"].map((item) => (
+            {["Instant AI summary of any PDF", "Fresh exam-style questions per upload", "Perfect for last-minute revision"].map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm" style={{ color: "var(--color-foreground)" }}>
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" style={{ color: "var(--color-mint)" }} />
                 <span>{item}</span>
@@ -302,18 +299,15 @@ function LandingPage() {
               Your best grade starts today.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base sm:text-lg" style={{ color: "var(--color-muted-foreground)" }}>
-              Join Namibian students turning study time into exam wins.
+              Stop guessing what to study. Start practicing what actually shows up on the exam.
             </p>
             <Link
               to="/auth"
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold transition-all hover:scale-105"
               style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
             >
-              Start Practicing Free <ArrowRight className="h-4 w-4" />
+              Start Practicing Now <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="mt-4 text-xs" style={{ color: "var(--color-muted-foreground)" }}>
-              Free forever plan · No credit card required
-            </p>
           </div>
         </div>
       </section>
