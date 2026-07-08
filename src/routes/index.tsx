@@ -230,10 +230,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>How it works</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              Three steps to a better grade.
+              Start in under a minute.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              No setup. No overwhelm. Just study.
+              No setup. No signup wall. Just study.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
