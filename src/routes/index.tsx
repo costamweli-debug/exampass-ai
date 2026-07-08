@@ -18,48 +18,48 @@ import heroImg from "@/assets/hero.png";
 import { SUBJECTS } from "@/lib/subjects";
 
 const VALUE_STRIP = [
-  { icon: Brain, label: "AI exam-style quizzes" },
-  { icon: Zap, label: "Instant explanations" },
-  { icon: TrendingUp, label: "Smart progress tracking" },
+  { icon: Brain, label: "Real exam-style questions" },
+  { icon: Zap, label: "Answers explained instantly" },
+  { icon: TrendingUp, label: "See your grade improve" },
 ];
 
 const FEATURES = [
   {
     icon: Brain,
-    title: "AI Quizzes Built to Pass Exams",
-    desc: "Exam-style questions matched to the NSSCO and AS Level syllabus. Practice the way you'll be tested.",
+    title: "Quizzes that mirror the real exam",
+    desc: "AI questions aligned to the NSSCO and AS Level syllabus. Practice exactly what you'll be tested on.",
   },
   {
     icon: MessageSquare,
-    title: "Focused Tutor Chat",
-    desc: "Ask questions on your subject and get straight answers. No distractions, no noise — just learning.",
+    title: "A tutor that never sleeps",
+    desc: "Ask anything about your subject. Get a clear answer in seconds — not next lesson.",
   },
   {
     icon: BarChart3,
-    title: "Track Real Improvement",
-    desc: "See exactly where you're strong, where you're weak, and how much you've improved each week.",
+    title: "Know exactly where you stand",
+    desc: "See your weak topics, your strong ones, and how much you've improved this week.",
   },
   {
     icon: Trophy,
-    title: "Rank Up as You Study",
-    desc: "Climb from Beginner to Elite. Every session earns XP so studying builds momentum you can feel.",
+    title: "Study that feels rewarding",
+    desc: "Climb from Beginner to Elite. Every quiz earns XP, so momentum builds itself.",
   },
   {
     icon: FileText,
-    title: "Turn Any PDF into a Quiz",
-    desc: "Upload notes or a past paper. Our AI reads it and generates a fresh quiz in seconds.",
+    title: "Turn any past paper into practice",
+    desc: "Upload a PDF. Get a fresh, exam-style quiz in seconds. Built for revision week.",
   },
   {
     icon: Zap,
-    title: "Clear, Instant Explanations",
-    desc: "Every answer comes with the reasoning. Understand the concept, not just the correct letter.",
+    title: "Understand it, don't memorise it",
+    desc: "Every answer comes with the reasoning. Learn the concept, not just the correct letter.",
   },
 ];
 
 const STEPS = [
-  { icon: Target, title: "Choose your subject", desc: "Pick from all NSSCO and AS Level subjects." },
-  { icon: Sparkles, title: "Practice with AI", desc: "Take quizzes, ask questions, upload notes." },
-  { icon: Trophy, title: "Improve and pass", desc: "Track progress and walk into your exam ready." },
+  { icon: Target, title: "Pick your subject", desc: "Every NSSCO and AS Level subject. One tap." },
+  { icon: Sparkles, title: "Practice with AI", desc: "Quiz, ask, upload notes. Learn fast." },
+  { icon: Trophy, title: "Walk in ready", desc: "Track progress. Beat the exam." },
 ];
 
 const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
