@@ -166,10 +166,10 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>Subjects</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl" style={{ fontFamily: "var(--font-display)", color: "var(--color-foreground)" }}>
-              NSSCO & AS Level, covered.
+              Your whole syllabus. One app.
             </h2>
             <p className="mt-4" style={{ color: "var(--color-muted-foreground)" }}>
-              {SUBJECTS.length} core subjects. {TOTAL_TOPICS}+ focused topics. All in one place.
+              {SUBJECTS.length} subjects. {TOTAL_TOPICS}+ topics. Tap one to start.
             </p>
           </div>
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
