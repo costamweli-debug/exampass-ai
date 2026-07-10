@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Mail, Lock, User, ArrowRight, GraduationCap, Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
@@ -53,21 +52,26 @@ function AuthPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An error occurred";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+
+    if (error) throw error;
+
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "An error occurred";
+
+    toast.error(message);
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-[calc(100vh-140px)] items-center justify-center px-4 py-12">
